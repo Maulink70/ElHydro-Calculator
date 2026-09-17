@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ElHydro FOV & Resolution Calculator</title>
+  <style>
+    :root {
+      --bg: #0b0d13;
+      --card-bg: #141722;
+      --accent: #2563eb;
+      --accent-target: #facc15;
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --border: #242a3d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 10px;
+      font-size: 0.88rem;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 6px;
+    }
+    h1 {
+      font-size: 1.15rem;
+      margin: 0;
+      color: #fff;
+      font-weight: 700;
+    }
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .lang-btn {
+      background: #1c2030;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .guide-open-btn {
+      background: #059669;
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Sélecteur compact */
+    .select-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .select-card label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .headset-dropdown {
+      width: 100%;
+      background: #0b0d13;
+      color: #f1f5f9;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    /* Grille 2 colonnes */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .card h2 {
+      font-size: 0.85rem;
+      margin: 0 0 8px 0;
+      color: #60a5fa;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+    .input-row { margin-bottom: 6px; }
+    .input-row:last-child { margin-bottom: 0; }
+    .input-row label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .input-row input {
+      width: 100%;
+      background: #0b0d13;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 8px;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: bold;
+    }
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .input-wrap input { flex: 1; min-width: 0; }
+    .pct-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #34d399;
+      min-width: 40px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .helmet-btn {
+      width: 100%;
+      margin-top: 8px;
+      background: #1e2538;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .helmet-btn:hover { background: #2563eb; color: #fff; }
+    .output-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 0.78rem;
+      border-bottom: 1px dashed #1e2438;
+    }
+    .output-row:last-child { border-bottom: none; }
+    .out-val { font-weight: 700; color: #38bdf8; }
+
+    /* Résolutions */
+    .res-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .res-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .res-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .res-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .res-title {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .res-display {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-target);
+      text-align: right;
+    }
+    .res-sub {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      display: block;
+      font-weight: normal;
+    }
+    .custom-ss-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .custom-ss-input-wrap input {
+      width: 65px;
+      background: #0b0d13;
+      border: 1px solid #3b82f6;
+      border-radius: 4px;
+      padding: 4px 6px;
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* Tooltip */
+    .tooltip-btn {
+      background: #1e2538;
+      border: 1px solid #334155;
+      color: #93c5fd;
+      border-radius: 50%;
+      width: 17px;
+      height: 17px;
+      font-size: 0.65rem;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .tooltip-btn:hover { background: #2563eb; color: #fff; }
+    .tooltip-box {
+      display: none;
+      background: #0f172a;
+      border: 1px solid #3b82f6;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.75rem;
+      color: #e2e8f0;
+      line-height: 1.4;
+      margin-top: 4px;
+      margin-bottom: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .tooltip-box.active { display: block; }
+
+    /* Accordéon Tableau Complet */
+    details.full-table-accordion {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    summary.accordion-trigger {
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #93c5fd;
+      cursor: pointer;
+      background: #121520;
+      user-select: none;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    summary.accordion-trigger::-webkit-details-marker { display: none; }
+    summary.accordion-trigger::after {
+      content: "▼";
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+    }
+    details[open] summary.accordion-trigger::after {
+      transform: rotate(180deg);
+    }
+    .table-wrap {
+      overflow-x: auto;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    th, td {
+      padding: 6px 8px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #0b0d13;
+      color: var(--text-muted);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    tr.target-row {
+      background: rgba(250, 204, 21, 0.15) !important;
+      font-weight: bold;
+    }
+    tr.target-row td { color: var(--accent-target); }
+    .tag {
+      background: #2563eb;
+      color: #fff;
+      font-size: 0.65rem;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-left: 3px;
+    }
+
+    /* Modal Guide */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      padding: 12px;
+      overflow-y: auto;
+    }
+    .modal-content {
+      background: #141722;
+      max-width: 580px;
+      margin: 10px auto;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .close-btn {
+      background: #ef4444;
+      border: none;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .download-banner {
+      background: #1e2436;
+      border: 1px solid #3b82f6;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .download-btn {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: center;
+    }
+    .specs-box {
+      background: #0b0d13;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+    .guide-body h3 { color: #60a5fa; margin: 12px 0 6px 0; font-size: 0.95rem; }
+    .guide-body ul { padding-left: 16px; margin: 4px 0; }
+    .guide-body li { margin-bottom: 4px; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1 id="uiTitle">ElHydro Calculator</h1>
+    <div class="top-controls">
+      <button class="guide-open-btn" id="btnOpenGuide">📖 <span id="txtBtnOpenGuide">Tutoriel</span></button>
+      <button class="lang-btn active" data-lang="FR">FR</button>
+      <button class="lang-btn" data-lang="EN">EN</button>
+      <button class="lang-btn" data-lang="IT">IT</button>
+    </div>
+  </div>
+
+  <div class="select-card">
+    <label for="headsetSelect" id="lblHeadset">Casque :</label>
+    <select class="headset-dropdown" id="headsetSelect">
+      <optgroup label="Pimax Dream Air & Crystal Light">
+        <option value="dream-air">Dream Air (Normal FOV)</option>
+        <option value="dream-air-wide">Dream Air (Wide FOV)</option>
+        <option value="dream-air-se">Dream Air SE</option>
+        <option value="pcl-normal">Crystal Light (Normal)</option>
+        <option value="pcl-wide">Crystal Light (Wide)</option>
+      </optgroup>
+      <optgroup label="Pimax Crystal Super">
+        <option value="cs-50ppd">Crystal Super 50 PPD</option>
+        <option value="cs-57ppd">Crystal Super 57 PPD</option>
+        <option value="cs-uw">Crystal Super Ultra Wide</option>
+        <option value="cs-oled">Crystal Super OLED</option>
+      </optgroup>
+      <optgroup label="Autres Casques">
+        <option value="bsb-2e">Bigscreen Beyond 2e</option>
+        <option value="quest-3">Meta Quest 3</option>
+        <option value="reverb-g2">HP Reverb G2</option>
+        <option value="psvr2">PSVR2</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <div class="two-col-grid">
+    <div class="card">
+      <h2 id="uiCol1">1. Saisie (Toolkit)</h2>
+      <div class="input-row">
+        <label id="lblUp">Haut - Up (°)</label>
+        <div class="input-wrap">
+          <input type="number" id="inUp" step="any">
+          <span class="pct-badge" id="pctUp">--%</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <label id="lblDn">Bas - Down (°)</label>
+        <div class="input-wrap">
+          <input type="number" id="inDn" step="any">
+          <span class="pct-badge" id="pctDn">--%</span>
+        </div>
+      </div>
+      <div class="input-row">
+        <label id="lblLL">Ext. - Left/Left (°)</label>
+        <div class="input-wrap">
+          <input type="number" id="inLL" step="any">
+          <span class="pct-badge" id="pctLL">--%</span>
+        </div>
+      </div>
+      <button class="helmet-btn" id="btnHelmetPreset">🪖 <span id="txtHelmetPreset">Préréglage Helmet</span></button>
+    </div>
+
+    <div class="card">
+      <h2 id="uiCol2">2. Angles Calculés</h2>
+      <div class="output-row">
+        <span>Left/Right (LR) :</span>
+        <span class="out-val" id="outLR">--</span>
+      </div>
+      <div class="output-row">
+        <span>Right/Left (RL) :</span>
+        <span class="out-val" id="outRL">--</span>
+      </div>
+      <div class="output-row">
+        <span>Right/Right (RR) :</span>
+        <span class="out-val" id="outRR">--</span>
+      </div>
+      <div class="output-row">
+        <span id="lblVFOV">Ouverture vFOV :</span>
+        <span class="out-val" id="outTotalVFOV" style="color:#34d399;">--</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-row">
+      <div>
+        <div class="res-title-wrap">
+          <span class="res-title" id="lblBaseRes">Résolution Cropped (100% SS)</span>
+          <button class="tooltip-btn" id="btnTipBase" title="Aide">?</button>
+        </div>
+        <span class="res-sub" id="subBasePpd">Base sans suréchantillonnage</span>
+      </div>
+      <div class="res-display" id="outBaseRes" style="color:#93c5fd;">--</div>
+    </div>
+    <div class="tooltip-box" id="tipBoxBase"></div>
+
+    <div class="res-row">
+      <div>
+        <div class="res-title-wrap">
+          <span class="res-title" style="color:var(--accent-target); font-weight:700;" id="lblNativeTarget">🎯 Cible Clarté Native</span>
+          <button class="tooltip-btn" id="btnTipNative" title="Aide">?</button>
+        </div>
+        <span class="res-sub" id="outNativeTargetDetails">Compense le crop (0.00% diff PPD)</span>
+      </div>
+      <div class="res-display" id="outNativeTargetRes">--</div>
+    </div>
+    <div class="tooltip-box" id="tipBoxNative"></div>
+
+    <div class="res-row" style="background: rgba(37, 99, 235, 0.08); padding: 8px; border-radius: 4px; margin-top: 4px;">
+      <div>
+        <div class="res-title-wrap">
+          <span class="res-title" style="color:#fff; font-weight:600;" id="lblCustomSS">Suréchantillonnage (SS) :</span>
+          <button class="tooltip-btn" id="btnTipSS" title="Aide">?</button>
+        </div>
+        <div class="custom-ss-input-wrap" style="margin-top: 4px;">
+          <input type="number" id="inCustomSS" value="140" step="5">
+          <span style="font-weight:bold; color:#60a5fa;">%</span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div class="res-display" id="outCustomRes" style="color:#38bdf8; font-size:1.05rem;">--</div>
+        <span class="res-sub" id="outCustomDetails">Scale: -- | PPD Eff: --</span>
+      </div>
+    </div>
+    <div class="tooltip-box" id="tipBoxSS"></div>
+  </div>
+
+  <details class="full-table-accordion">
+    <summary class="accordion-trigger" id="btnAccordionTitle">📊 Afficher toutes les résolutions</summary>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th id="thScale">Échelle</th>
+            <th>SS %</th>
+            <th id="thRes">Résolution (W × H)</th>
+            <th>PPD Eff</th>
+            <th>Diff %</th>
+          </tr>
+        </thead>
+        <tbody id="ssTableBody"></tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<!-- Modal Guide & Tuto -->
+<div class="modal-backdrop" id="guideModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 style="margin:0; font-size:1.05rem; color:#fff;" id="modalGuideTitle">Tutoriel ElHydro</h2>
+      <button class="close-btn" id="btnCloseGuide">✕</button>
+    </div>
+
+    <div class="download-banner">
+      <div style="font-size:0.85rem; font-weight:700; color:#f8fafc;" id="bannerDownloadText">Vous pouvez également télécharger le tutoriel détaillé ici</div>
+      <button class="download-btn" id="btnDownloadPdf">📥 Télécharger le PDF</button>
+    </div>
+
+    <div class="specs-box" id="modalSpecsDisplay">--</div>
+    <div class="guide-body" id="guideContent"></div>
+  </div>
+</div>
+
+<script>
+  const I18N = {
+    FR: {
+      title: "Calculateur ElHydro",
+      openGuideBtn: "Tutoriel",
+      modalTitle: "Tutoriel ElHydro",
+      lblHeadset: "Casque :",
+      uiCol1: "1. Saisie (Toolkit)",
+      lblUp: "Haut - Up (°)",
+      lblDn: "Bas - Down (°)",
+      lblLL: "Ext. - Left/Left (°)",
+      uiCol2: "2. Angles Calculés",
+      lblVFOV: "Ouverture vFOV :",
+      lblBaseRes: "Résolution Cropped (100% SS)",
+      subBasePpd: "Rendu de base sans suréchantillonnage",
+      lblNativeTarget: "🎯 Cible Clarté Native",
+      lblCustomSS: "Votre Super Sampling (SS) :",
+      helmetPresetBtn: "Préréglage Helmet (crop 20% haut / 24,9% bas)",
+      accordionTitle: "📊 Afficher toutes les résolutions",
+      thScale: "Échelle",
+      thRes: "Résolution (W × H)",
+      targetTag: "Cible",
+      tipBase: "C'est la résolution brute calculée proportionnellement à la surface rognée.",
+      tipNative: "C'est la résolution suréchantillonnée exacte qui compense l'étirement des lentilles pour restaurer la densité native ({ppd} PPD, soit 0,00% de différence par rapport à la dalle d'origine).",
+      tipSS: "Multiplicateur de résolution appliqué à l'image découpée. Au-delà du palier natif, il augmente la netteté et la précision des détails lointains tant que votre carte graphique maintient un framerate stable à 90 FPS.",
+      bannerText: "Vous pouvez également télécharger le tutoriel détaillé ici",
+      downloadBtnText: "📥 Télécharger le PDF (FR)",
+      pdfFile: "tutoriel-elhydro-fr.pdf",
+      specsText: "Données matérielles : <strong>{name}</strong><br>Résolution de rendu native (100 %) : <strong>{w} × {h}</strong> | Angles d'origine : Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
+    },
+    EN: {
+      title: "ElHydro Calculator",
+      openGuideBtn: "Guide",
+      modalTitle: "ElHydro Guide",
+      lblHeadset: "Headset:",
+      uiCol1: "1. Input (Toolkit)",
+      lblUp: "Top - Up (°)",
+      lblDn: "Bottom - Down (°)",
+      lblLL: "Outer - Left/Left (°)",
+      uiCol2: "2. Calculated Angles",
+      lblVFOV: "Total vFOV:",
+      lblBaseRes: "Cropped Res (100% SS)",
+      subBasePpd: "Base resolution without supersampling",
+      lblNativeTarget: "🎯 Native Clarity Target",
+      lblCustomSS: "Custom Super Sampling (SS):",
+      helmetPresetBtn: "Helmet Preset (20% top / 24.9% bottom crop)",
+      accordionTitle: "📊 Show All Resolutions",
+      thScale: "Scale",
+      thRes: "Resolution (W × H)",
+      targetTag: "Target",
+      tipBase: "This is the raw resolution calculated proportionally to the cropped visible surface area.",
+      tipNative: "This is the exact supersampled resolution compensating for lens stretch to restore native clarity ({ppd} PPD, exactly 0.00% difference vs original display panel).",
+      tipSS: "Resolution multiplier applied to the cropped image. Beyond the native target, it sharpens distant details as long as your GPU maintains a stable 90 FPS.",
+      bannerText: "You can also download the detailed tutorial here",
+      downloadBtnText: "📥 Download PDF (EN)",
+      pdfFile: "guide-elhydro-en.pdf",
+      specsText: "Hardware Specs: <strong>{name}</strong><br>Native Render Resolution (100%): <strong>{w} × {h}</strong> | Stock Angles: Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
+    },
+    IT: {
+      title: "Calcolatore ElHydro",
+      openGuideBtn: "Guida",
+      modalTitle: "Guida ElHydro",
+      lblHeadset: "Visore :",
+      uiCol1: "1. Inserimento (Toolkit)",
+      lblUp: "Superiore - Up (°)",
+      lblDn: "Inferiore - Down (°)",
+      lblLL: "Esterno - Left/Left (°)",
+      uiCol2: "2. Angoli Calcolati",
+      lblVFOV: "Apertura vFOV :",
+      lblBaseRes: "Risoluzione Ritagliata (100% SS)",
+      subBasePpd: "Base senza oversampling",
+      lblNativeTarget: "🎯 Obiettivo Nitidezza Nativa",
+      lblCustomSS: "Super Sampling (SS) Desiderato :",
+      helmetPresetBtn: "Preset Helmet (crop 20% sup. / 24,9% inf.)",
+      accordionTitle: "📊 Mostra tutte le risoluzioni",
+      thScale: "Scala",
+      thRes: "Risoluzione (W × H)",
+      targetTag: "Target",
+      tipBase: "È la risoluzione grezza calcolata proporzionalmente alla superficie visibile ritagliata.",
+      tipNative: "È la risoluzione in oversampling esatta che compensa l'estensione delle lenti per ripristinare la densità nativa ({ppd} PPD, ovvero 0,00% di differenza rispetto al pannello originale).",
+      tipSS: "Moltiplicatore di risoluzione applicato all'immagine ritagliata. Oltre il livello nativo, migliora la nitidezza finché la GPU mantiene stabili i 90 FPS.",
+      bannerText: "È anche possibile scaricare il tutorial dettagliato qui",
+      downloadBtnText: "📥 Scarica il PDF (IT)",
+      pdfFile: "guida-elhydro-it.pdf",
+      specsText: "Dati hardware : <strong>{name}</strong><br>Risoluzione di rendering nativa (100 %) : <strong>{w} × {h}</strong> | Angoli stock : Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
+    }
+  };
+
+  const GUIDES = {
+    FR: `
+      <h3>1. Prérequis</h3>
+      <ul>
+        <li><strong>OpenXR Toolkit (mod PrimaShock v1.4.0)</strong> installé avec shaders à jour.</li>
+        <li><strong>Pilotes SBOYS 3 désactivés</strong> (impératif).</li>
+        <li><strong>Smart Smoothing désactivé</strong> dans Pimax Play.</li>
+      </ul>
+      <h3>2. Les 3 Règles d'Or</h3>
+      <ul>
+        <li><strong>Ne modifier que 3 valeurs :</strong> Up, Down, Left/Left en degrés. LR et RL sont auto-calculés pour préserver la vision binoculaire.</li>
+        <li><strong>NVIDIA MFAA + MSAA 2x en jeu :</strong> MFAA sur ON dans le panneau NVIDIA + MSAA 2x en jeu (Post-Processing AA désactivé). Clarté équivalente au 4x avec le frametime du 2x !</li>
+        <li><strong>Dans le Toolkit :</strong> Sous <em>System</em>, activez <em>Override Resolution</em> et renseignez la résolution. Ne cliquez <strong>JAMAIS sur APPLY</strong>.</li>
+      </ul>
+      <h3>3. Helmet Overlay (optionnel)</h3>
+      <ul>
+        <li><strong>Prérequis :</strong> le montage PrimaShock ci-dessus doit être installé et fonctionnel.</li>
+        <li><strong>Crop recommandé :</strong> 20% haut / 24,9% bas — utilisez le bouton 🪖 <em>Préréglage Helmet</em> du calculateur, puis saisissez la résolution correspondante dans le Toolkit.</li>
+        <li><strong>Couche OpenXR de Le Dour :</strong> <a href="https://github.com/mledour/OpenXR-Layer-crop-fov/releases/latest" target="_blank" rel="noopener" style="color:#60a5fa;">dernière version GitHub</a>. Fichiers de config dans <em>%LOCALAPPDATA%\\XR_APILAYER_MLEDOUR_fov_crop\\</em>.</li>
+        <li><strong>Dans le JSON :</strong> <em>"enabled": true</em> en tête du fichier ET dans la section <em>helmet_overlay</em>, et <strong>tous les crops de Le Dour à 0</strong> (le crop est déjà géré par PrimaShock).</li>
+        <li><strong>Réglages de départ :</strong> <em>distance_m</em> 0.15 · <em>horizontal_fov_deg</em> 125 · <em>vertical_offset_deg</em> -14 · <em>live_edit</em> true pour ajuster en direct (Ctrl+S).</li>
+      </ul>
+    `,
+    IT: `
+      <h3>1. Prerequisiti</h3>
+      <ul>
+        <li><strong>OpenXR Toolkit (mod PrimaShock v1.4.0)</strong> installato con shader aggiornati.</li>
+        <li><strong>Driver SBOYS 3 disattivati</strong> (obbligatorio).</li>
+        <li><strong>Smart Smoothing disattivato</strong> in Pimax Play.</li>
+      </ul>
+      <h3>2. Le Regole Fondamentali</h3>
+      <ul>
+        <li><strong>Modifica solo 3 valori :</strong> Up, Down, Left/Left in gradi. LR e RL sono calcolati automaticamente per conservare la stereoscopia.</li>
+        <li><strong>NVIDIA MFAA + MSAA 2x in-game :</strong> MFAA su ON nel pannello NVIDIA + MSAA 2x in gioco (Post-Processing AA disattivato). Resa visiva del 4x al costo del 2x !</li>
+        <li><strong>Nel Toolkit :</strong> In <em>System</em>, attiva <em>Override Resolution</em> e inserisci la risoluzione. Non cliccare <strong>MAI su APPLY</strong>.</li>
+      </ul>
+      <h3>3. Helmet Overlay (opzionale)</h3>
+      <ul>
+        <li><strong>Prerequisito :</strong> il sistema PrimaShock qui sopra deve essere installato e funzionante.</li>
+        <li><strong>Crop consigliato :</strong> 20% superiore / 24,9% inferiore — usa il pulsante 🪖 <em>Preset Helmet</em> del calcolatore, poi inserisci la risoluzione corrispondente nel Toolkit.</li>
+        <li><strong>Layer OpenXR di Le Dour :</strong> <a href="https://github.com/mledour/OpenXR-Layer-crop-fov/releases/latest" target="_blank" rel="noopener" style="color:#60a5fa;">ultima versione GitHub</a>. File di configurazione in <em>%LOCALAPPDATA%\\XR_APILAYER_MLEDOUR_fov_crop\\</em>.</li>
+        <li><strong>Nel JSON :</strong> <em>"enabled": true</em> all'inizio del file E nella sezione <em>helmet_overlay</em>, e <strong>tutti i crop di Le Dour a 0</strong> (il crop è già gestito da PrimaShock).</li>
+        <li><strong>Valori di partenza :</strong> <em>distance_m</em> 0.15 · <em>horizontal_fov_deg</em> 125 · <em>vertical_offset_deg</em> -14 · <em>live_edit</em> true per regolare in tempo reale (Ctrl+S).</li>
+      </ul>
+    `,
+    EN: `
+      <h3>1. Prerequisites</h3>
+      <ul>
+        <li><strong>OpenXR Toolkit (PrimaShock mod v1.4.0)</strong> with updated shaders.</li>
+        <li><strong>Disable SBOYS 3 drivers</strong>.</li>
+        <li><strong>Disable Smart Smoothing</strong> in Pimax Play.</li>
+      </ul>
+      <h3>2. Key Rules</h3>
+      <ul>
+        <li><strong>Input 3 values only:</strong> Up, Down, Left/Left in degrees. LR and RL are auto-calculated.</li>
+        <li><strong>NVIDIA MFAA + In-Game MSAA 2x:</strong> MFAA On in NVIDIA Panel + MSAA 2x in-game (Post-Processing AA Off). Delivers 4x clarity at 2x frame costs!</li>
+        <li><strong>In Toolkit:</strong> Under <em>System</em>, enable <em>Override Resolution</em> and set Width/Height. <strong>Never click APPLY</strong>.</li>
+      </ul>
+      <h3>3. Helmet Overlay (optional)</h3>
+      <ul>
+        <li><strong>Prerequisite:</strong> the PrimaShock setup above must be installed and working.</li>
+        <li><strong>Recommended crop:</strong> 20% top / 24.9% bottom — use the calculator's 🪖 <em>Helmet Preset</em> button, then enter the matching resolution in the Toolkit.</li>
+        <li><strong>Le Dour's OpenXR layer:</strong> <a href="https://github.com/mledour/OpenXR-Layer-crop-fov/releases/latest" target="_blank" rel="noopener" style="color:#60a5fa;">latest GitHub release</a>. Config files in <em>%LOCALAPPDATA%\\XR_APILAYER_MLEDOUR_fov_crop\\</em>.</li>
+        <li><strong>In the JSON:</strong> <em>"enabled": true</em> at the top of the file AND inside <em>helmet_overlay</em>, and <strong>all Le Dour crop values set to 0</strong> (the crop is already handled by PrimaShock).</li>
+        <li><strong>Starting values:</strong> <em>distance_m</em> 0.15 · <em>horizontal_fov_deg</em> 125 · <em>vertical_offset_deg</em> -14 · <em>live_edit</em> true for live tuning (Ctrl+S).</li>
+      </ul>
+    `
+  };
+
+  /*
+   * Données extraites des fichiers Excel ElHydro (feuille principale de chaque fichier).
+   * nativeW/H  = D4/D5 | nativeUp/Dn/LL/LR = D9/D10/D11/D13 (RL = LR, RR = LL, miroir comme dans l'Excel)
+   * defaultUp/Dn/LL = F9/F10/F11 (sauf Dream Air Normal : valeurs onglet AMS 2 choisies par l'utilisateur)
+   */
+  const HEADSETS = {
+    'dream-air': {
+      name: 'Pimax Dream Air (Normal FOV)',
+      nativeW: 5190, nativeH: 4168,
+      nativeUp: 44.5, nativeDn: 44.5, nativeLL: 55.1, nativeLR: 45.5,
+      defaultUp: 31.2, defaultDn: 40.1, defaultLL: 54.5
+    },
+    'dream-air-wide': {
+      name: 'Pimax Dream Air (Wide FOV)',
+      nativeW: 5342, nativeH: 4168,
+      nativeUp: 44.5, nativeDn: 44.5, nativeLL: 58.1, nativeLR: 42.5,
+      defaultUp: 30.0, defaultDn: 30.0, defaultLL: 53.0,
+      // Échelle spécifique du fichier Excel Dream Air Wide (H9:H38)
+      ssSteps: [
+        80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135,
+        136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147,
+        148, 149, 150, 151, 152, 153
+      ]
+    },
+    'dream-air-se': {
+      name: 'Pimax Dream Air SE',
+      nativeW: 3118, nativeH: 3072,
+      nativeUp: 46.5, nativeDn: 46.5, nativeLL: 52.3, nativeLR: 40.2,
+      defaultUp: 30.2, defaultDn: 30.2, defaultLL: 50.7
+    },
+    'pcl-normal': {
+      name: 'Pimax Crystal Light (Normal)',
+      nativeW: 4312, nativeH: 5102,
+      nativeUp: 51.9, nativeDn: 51.9, nativeLL: 51.7, nativeLR: 41.7,
+      defaultUp: 17.6, defaultDn: 17.6, defaultLL: 49.115
+    },
+    'pcl-wide': {
+      name: 'Pimax Crystal Light (Wide)',
+      nativeW: 4380, nativeH: 5102,
+      nativeUp: 51.9, nativeDn: 51.9, nativeLL: 53.7, nativeLR: 39.7,
+      defaultUp: 30.0, defaultDn: 30.0, defaultLL: 53.7
+    },
+    'cs-50ppd': {
+      name: 'Pimax Crystal Super 50 PPD',
+      nativeW: 6240, nativeH: 6280,
+      nativeUp: 58.7, nativeDn: 58.7, nativeLL: 63.5, nativeLR: 51.5,
+      defaultUp: 38.0, defaultDn: 50.0, defaultLL: 61.0
+    },
+    'cs-57ppd': {
+      name: 'Pimax Crystal Super 57 PPD',
+      nativeW: 6214, nativeH: 6556,
+      nativeUp: 47.0, nativeDn: 47.0, nativeLL: 50.8, nativeLR: 38.8,
+      defaultUp: 47.0, defaultDn: 47.0, defaultLL: 50.8
+    },
+    'cs-uw': {
+      name: 'Pimax Crystal Super Ultra Wide',
+      nativeW: 6812, nativeH: 6502,
+      nativeUp: 59.8, nativeDn: 59.8, nativeLL: 69.1, nativeLR: 44.4,
+      defaultUp: 10.8, defaultDn: 25.1, defaultLL: 57.4
+    },
+    'cs-oled': {
+      name: 'Pimax Crystal Super OLED',
+      nativeW: 5520, nativeH: 5356,
+      nativeUp: 51.7, nativeDn: 51.7, nativeLL: 56.8, nativeLR: 45.9,
+      defaultUp: 30.0, defaultDn: 30.0, defaultLL: 47.7
+    },
+    'bsb-2e': {
+      name: 'Bigscreen Beyond 2e',
+      nativeW: 3560, nativeH: 3560,
+      nativeUp: 44.4, nativeDn: 52.6, nativeLL: 54.9, nativeLR: 42.1,
+      defaultUp: 43.5, defaultDn: 52.1, defaultLL: 53.3
+    },
+    'quest-3': {
+      name: 'Meta Quest 3',
+      nativeW: 3072, nativeH: 3264,
+      nativeUp: 44.0, nativeDn: 55.0, nativeLL: 54.0, nativeLR: 40.0,
+      defaultUp: 29.0, defaultDn: 36.0, defaultLL: 48.6
+    },
+    'reverb-g2': {
+      name: 'HP Reverb G2',
+      nativeW: 2576, nativeH: 2555,
+      nativeUp: 46.7, nativeDn: 46.63, nativeLL: 52.6, nativeLR: 41.6,
+      defaultUp: 21.5, defaultDn: 39.4, defaultLL: 48.9
+    },
+    'psvr2': {
+      name: 'PSVR2',
+      nativeW: 3400, nativeH: 3468,
+      nativeUp: 53.0, nativeDn: 53.0, nativeLL: 61.5, nativeLR: 43.4,
+      defaultUp: 30.0, defaultDn: 30.0, defaultLL: 58.4
+    }
+  };
+
+  let currentHeadsetKey = 'dream-air';
+  let currentLang = 'FR';
+
+  const toRad = deg => deg * (Math.PI / 180);
+  const toDeg = rad => rad * (180 / Math.PI);
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+
+    const dict = I18N[lang];
+    document.getElementById('uiTitle').textContent = dict.title;
+    document.getElementById('txtBtnOpenGuide').textContent = dict.openGuideBtn;
+    document.getElementById('modalGuideTitle').textContent = dict.modalTitle;
+    document.getElementById('lblHeadset').textContent = dict.lblHeadset;
+    document.getElementById('uiCol1').textContent = dict.uiCol1;
+    document.getElementById('lblUp').textContent = dict.lblUp;
+    document.getElementById('lblDn').textContent = dict.lblDn;
+    document.getElementById('lblLL').textContent = dict.lblLL;
+    document.getElementById('uiCol2').textContent = dict.uiCol2;
+    document.getElementById('lblVFOV').textContent = dict.lblVFOV;
+    document.getElementById('lblBaseRes').textContent = dict.lblBaseRes;
+    document.getElementById('subBasePpd').textContent = dict.subBasePpd;
+    document.getElementById('lblNativeTarget').textContent = dict.lblNativeTarget;
+    document.getElementById('lblCustomSS').textContent = dict.lblCustomSS;
+    document.getElementById('txtHelmetPreset').textContent = dict.helmetPresetBtn;
+    document.getElementById('btnAccordionTitle').textContent = dict.accordionTitle;
+    document.getElementById('thScale').textContent = dict.thScale;
+    document.getElementById('thRes').textContent = dict.thRes;
+    document.getElementById('bannerDownloadText').textContent = dict.bannerText;
+    document.getElementById('btnDownloadPdf').textContent = dict.downloadBtnText;
+
+    updateModalSpecs();
+    document.getElementById('guideContent').innerHTML = GUIDES[lang];
+
+    recalculate();
+  }
+
+  function updateModalSpecs() {
+    const hs = HEADSETS[currentHeadsetKey];
+    const dict = I18N[currentLang];
+    document.getElementById('modalSpecsDisplay').innerHTML = dict.specsText
+      .replace('{name}', hs.name)
+      .replace('{w}', hs.nativeW)
+      .replace('{h}', hs.nativeH)
+      .replace('{up}', hs.nativeUp)
+      .replace('{dn}', hs.nativeDn)
+      .replace('{ll}', hs.nativeLL)
+      .replace('{lr}', hs.nativeLR);
+  }
+
+  function onHeadsetChange(key) {
+    currentHeadsetKey = key;
+    const hs = HEADSETS[key];
+    document.getElementById('inUp').value = hs.defaultUp;
+    document.getElementById('inDn').value = hs.defaultDn;
+    document.getElementById('inLL').value = hs.defaultLL;
+    updateModalSpecs();
+    recalculate();
+  }
+
+  /*
+   * Moteur de calcul — réplique EXACTE des formules Excel ElHydro :
+   *   B4 = nativeW / (nativeLL + nativeLR)
+   *   B5 = nativeH / (nativeUp + nativeDn)
+   *   B2 (PPD natif eff.)   = ROUND(SQRT(B4*B5), 0)
+   *   F13 (LR)  = DEGREES(ATAN(TAN(nativeLR) * TAN(LL) / TAN(nativeLL)))
+   *   F15 (RR)  = LL   |   F14 (RL) = DEGREES(ATAN(TAN(nativeRL) * TAN(RR) / TAN(nativeRR)))  (nativeRL = nativeLR, nativeRR = nativeLL)
+   *   E4 (crop W) = nativeW * ( [œil G : (tanLL+tanLR)/(tan nLL+tan nLR)] + [œil D : (tanRR+tanRL)/(tan nRR+tan nRL)] ) / 2
+   *   E5 (crop H) = nativeH * (tanUp+tanDn)/(tan nUp+tan nDn)
+   *   Tableau : I = E4*SQRT(SS)  J = E5*SQRT(SS)   (PLEINE PRÉCISION, arrondi uniquement à l'affichage)
+   *             K = I/(LL+LR)   L = J/(Up+Dn)
+   *             M (PPD Eff) = ROUND(SQRT(K*L), 0)
+   *             N (Diff)    = (M - B2)/B2   → affiché en % avec 2 décimales (format Excel 0.00%)
+   *   Surlignage jaune (Cible) : M === B2 (égalité stricte, mise en forme conditionnelle Excel $M9=$B$2)
+   */
+  function recalculate() {
+    const hs = HEADSETS[currentHeadsetKey];
+    const dict = I18N[currentLang];
+
+    const up = parseFloat(document.getElementById('inUp').value) || 0;
+    const dn = parseFloat(document.getElementById('inDn').value) || 0;
+    const ll = parseFloat(document.getElementById('inLL').value) || 0;
+
+    // Angles natifs (miroir droite/gauche comme dans l'Excel : RL = LR, RR = LL)
+    const nUp = hs.nativeUp, nDn = hs.nativeDn;
+    const nLL = hs.nativeLL, nLR = hs.nativeLR;
+    const nRL = nLR, nRR = nLL;
+
+    // F13 : LR = DEGREES(ATAN(TAN(nLR)*TAN(LL)/TAN(nLL)))
+    const lr = toDeg(Math.atan(Math.tan(toRad(nLR)) * Math.tan(toRad(ll)) / Math.tan(toRad(nLL))));
+    // F15 : RR = LL
+    const rr = ll;
+    // F14 : RL = DEGREES(ATAN(TAN(nRL)*TAN(RR)/TAN(nRR)))
+    const rl = toDeg(Math.atan(Math.tan(toRad(nRL)) * Math.tan(toRad(rr)) / Math.tan(toRad(nRR))));
+
+    document.getElementById('outLR').textContent = lr.toFixed(2) + '°';
+    document.getElementById('outRL').textContent = rl.toFixed(2) + '°';
+    document.getElementById('outRR').textContent = rr.toFixed(2) + '°';
+    document.getElementById('outTotalVFOV').textContent = (up + dn).toFixed(2) + '°';
+
+    // Pourcentages Toolkit (colonne E de l'Excel : saisie / natif, format 0% → entier)
+    document.getElementById('pctUp').textContent = Math.round((up / nUp) * 100) + '%';
+    document.getElementById('pctDn').textContent = Math.round((dn / nDn) * 100) + '%';
+    document.getElementById('pctLL').textContent = Math.round((ll / nLL) * 100) + '%';
+
+    // E4 : largeur croppée = moyenne des ratios œil gauche / œil droit (pleine précision)
+    const ratioLeftEye  = (Math.tan(toRad(ll)) + Math.tan(toRad(lr))) / (Math.tan(toRad(nLL)) + Math.tan(toRad(nLR)));
+    const ratioRightEye = (Math.tan(toRad(rr)) + Math.tan(toRad(rl))) / (Math.tan(toRad(nRR)) + Math.tan(toRad(nRL)));
+    const cropW = hs.nativeW * ((ratioLeftEye + ratioRightEye) / 2);
+    // E5 : hauteur croppée (pleine précision)
+    const cropH = hs.nativeH * ((Math.tan(toRad(up)) + Math.tan(toRad(dn))) / (Math.tan(toRad(nUp)) + Math.tan(toRad(nDn))));
+
+    document.getElementById('outBaseRes').textContent = `${Math.round(cropW)} × ${Math.round(cropH)}`;
+
+    // B2 : PPD natif effectif
+    const b4 = hs.nativeW / (nLL + nLR);
+    const b5 = hs.nativeH / (nUp + nDn);
+    const nativePpdEff = Math.round(Math.sqrt(b4 * b5));
+
+    // Dénominateurs PPD croppés : (LL + LR) et (Up + Dn), pleine précision
+    const angleH = ll + lr;
+    const angleV = up + dn;
+
+    // Mise à jour des tooltips
+    document.getElementById('tipBoxBase').textContent = dict.tipBase;
+    document.getElementById('tipBoxNative').textContent = dict.tipNative.replace('{ppd}', nativePpdEff);
+    document.getElementById('tipBoxSS').textContent = dict.tipSS;
+
+    // Tableau des paliers SS : échelle standard 80% → 225% par pas de 5 (H9:H38 de l'Excel),
+    // sauf si le casque définit sa propre échelle (ex : Dream Air Wide)
+    const ssSteps = hs.ssSteps || [
+      80, 85, 90, 95, 100, 105, 110, 115, 120, 125,
+      130, 135, 140, 145, 150, 155, 160, 165, 170, 175,
+      180, 185, 190, 195, 200, 205, 210, 215, 220, 225
+    ];
+
+    const tbody = document.getElementById('ssTableBody');
+    tbody.innerHTML = '';
+
+    let targetSS = null, targetW = null, targetH = null;
+    let fallbackSS = 100, fallbackW = cropW, fallbackH = cropH, minAbsDiff = Infinity;
+
+    ssSteps.forEach(ss => {
+      const sc = Math.sqrt(ss / 100);          // G = SQRT(H)
+      const wF = cropW * sc;                    // I (pleine précision)
+      const hF = cropH * sc;                    // J (pleine précision)
+      const ppdH = wF / angleH;                 // K
+      const ppdV = hF / angleV;                 // L
+      const ppdEff = Math.round(Math.sqrt(ppdH * ppdV)); // M
+      const diff = (ppdEff - nativePpdEff) / nativePpdEff; // N
+
+      // Cible = égalité stricte M === B2 (règle de mise en forme conditionnelle Excel)
+      const isTarget = (ppdEff === nativePpdEff);
+      if (isTarget && targetSS === null) {
+        targetSS = ss; targetW = wF; targetH = hF;
+      }
+      if (Math.abs(diff) < minAbsDiff) {
+        minAbsDiff = Math.abs(diff);
+        fallbackSS = ss; fallbackW = wF; fallbackH = hF;
+      }
+
+      const tr = document.createElement('tr');
+      if (isTarget) tr.classList.add('target-row');
+
+      tr.innerHTML = `
+        <td>${sc.toFixed(2)}</td>
+        <td>${ss}%</td>
+        <td>${Math.round(wF)} × ${Math.round(hF)} ${isTarget ? `<span class="tag">${dict.targetTag}</span>` : ''}</td>
+        <td>${ppdEff}</td>
+        <td>${(diff * 100).toFixed(2)}%</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Bloc "Cible Clarté Native" : premier palier où M = B2 ; à défaut, palier le plus proche
+    const bestSS = (targetSS !== null) ? targetSS : fallbackSS;
+    const bestW  = (targetSS !== null) ? targetW  : fallbackW;
+    const bestH  = (targetSS !== null) ? targetH  : fallbackH;
+
+    document.getElementById('outNativeTargetRes').textContent = `${Math.round(bestW)} × ${Math.round(bestH)}`;
+    document.getElementById('outNativeTargetDetails').textContent = `Palier idéal : ${bestSS}% SS (${nativePpdEff} PPD)`;
+
+    // Calcul personnalisé (même moteur, pleine précision)
+    const customSS = parseFloat(document.getElementById('inCustomSS').value) || 100;
+    const customScale = Math.sqrt(customSS / 100);
+    const custWF = cropW * customScale;
+    const custHF = cropH * customScale;
+    const custPpdEff = Math.round(Math.sqrt((custWF / angleH) * (custHF / angleV)));
+
+    document.getElementById('outCustomRes').textContent = `${Math.round(custWF)} × ${Math.round(custHF)}`;
+    document.getElementById('outCustomDetails').textContent = `Échelle: ${customScale.toFixed(2)} | PPD Eff: ${custPpdEff}`;
+  }
+
+  // Événements
+  document.getElementById('headsetSelect').addEventListener('change', (e) => onHeadsetChange(e.target.value));
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
+
+  document.getElementById('inUp').addEventListener('input', recalculate);
+  document.getElementById('inDn').addEventListener('input', recalculate);
+  document.getElementById('inLL').addEventListener('input', recalculate);
+  document.getElementById('inCustomSS').addEventListener('input', recalculate);
+
+  // Préréglage Helmet Overlay : crop 20% haut / 24,9% bas
+  // → Up = 80% de l'angle natif, Down = 75,1% de l'angle natif (colonne E de l'Excel), LL inchangé
+  document.getElementById('btnHelmetPreset').addEventListener('click', () => {
+    const hs = HEADSETS[currentHeadsetKey];
+    document.getElementById('inUp').value = (Math.round(hs.nativeUp * 0.80 * 10) / 10).toFixed(1);
+    document.getElementById('inDn').value = (Math.round(hs.nativeDn * 0.751 * 10) / 10).toFixed(1);
+    recalculate();
+  });
+
+  // Infobulles cliquables (?)
+  document.getElementById('btnTipBase').addEventListener('click', () => {
+    document.getElementById('tipBoxBase').classList.toggle('active');
+  });
+  document.getElementById('btnTipNative').addEventListener('click', () => {
+    document.getElementById('tipBoxNative').classList.toggle('active');
+  });
+  document.getElementById('btnTipSS').addEventListener('click', () => {
+    document.getElementById('tipBoxSS').classList.toggle('active');
+  });
+
+  // Modal
+  const modal = document.getElementById('guideModal');
+  document.getElementById('btnOpenGuide').addEventListener('click', () => modal.style.display = 'block');
+  document.getElementById('btnCloseGuide').addEventListener('click', () => modal.style.display = 'none');
+  window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+  // Téléchargement sécurisé vers les noms exacts
+  document.getElementById('btnDownloadPdf').addEventListener('click', () => {
+    const rawFileName = I18N[currentLang].pdfFile;
+    window.open(rawFileName, '_blank');
+  });
+
+  // Initialisation par défaut
+  onHeadsetChange('dream-air');
+  setLanguage('FR');
+</script>
+
+</body>
+</html>
