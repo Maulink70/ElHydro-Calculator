@@ -82,9 +82,27 @@
       padding: 8px 10px;
       margin-bottom: 10px;
       display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+    .select-row {
+      display: flex;
       align-items: center;
       gap: 8px;
     }
+    .select-row label { min-width: 62px; }
+    .profile-btn {
+      background: #1c2030;
+      border: 1px solid var(--border);
+      color: #93c5fd;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .profile-btn:hover { background: #2563eb; color: #fff; }
     .select-card label {
       font-size: 0.8rem;
       color: var(--text-muted);
@@ -423,8 +441,9 @@
   </div>
 
   <div class="select-card">
-    <label for="headsetSelect" id="lblHeadset">Casque :</label>
-    <select class="headset-dropdown" id="headsetSelect">
+    <div class="select-row">
+      <label for="headsetSelect" id="lblHeadset">Casque :</label>
+      <select class="headset-dropdown" id="headsetSelect">
       <optgroup label="Pimax Dream Air & Crystal Light">
         <option value="dream-air">Dream Air (Normal FOV)</option>
         <option value="dream-air-wide">Dream Air (Wide FOV)</option>
@@ -445,6 +464,13 @@
         <option value="psvr2">PSVR2</option>
       </optgroup>
     </select>
+    </div>
+    <div class="select-row">
+      <label for="profileSelect" id="lblProfile">Profil :</label>
+      <select class="headset-dropdown" id="profileSelect"></select>
+      <button class="profile-btn" id="btnSaveProfile" title="Enregistrer le profil">💾</button>
+      <button class="profile-btn" id="btnDeleteProfile" title="Supprimer le profil">🗑️</button>
+    </div>
   </div>
 
   <div class="two-col-grid">
@@ -610,6 +636,12 @@
       openGuideBtn: "Tutoriel",
       modalTitle: "Tutoriel ElHydro",
       lblHeadset: "Casque :",
+      lblProfile: "Profil :",
+      profileNone: "— Aucun profil —",
+      profileNamePrompt: "Nom du profil (ex : AMS2, iRacing, ACC…) :",
+      profileDeleteConfirm: "Supprimer le profil « {name} » ?",
+      profileSaveTitle: "Enregistrer le profil",
+      profileDeleteTitle: "Supprimer le profil",
       uiCol1: "1. Saisie (Toolkit)",
       lblUp: "Haut - Up (°)",
       lblDn: "Bas - Down (°)",
@@ -646,6 +678,12 @@
       openGuideBtn: "Guide",
       modalTitle: "ElHydro Guide",
       lblHeadset: "Headset:",
+      lblProfile: "Profile:",
+      profileNone: "— No profiles —",
+      profileNamePrompt: "Profile name (e.g. AMS2, iRacing, ACC…):",
+      profileDeleteConfirm: "Delete profile \"{name}\"?",
+      profileSaveTitle: "Save profile",
+      profileDeleteTitle: "Delete profile",
       uiCol1: "1. Input (Toolkit)",
       lblUp: "Top - Up (°)",
       lblDn: "Bottom - Down (°)",
@@ -682,6 +720,12 @@
       openGuideBtn: "Guida",
       modalTitle: "Guida ElHydro",
       lblHeadset: "Visore :",
+      lblProfile: "Profilo :",
+      profileNone: "— Nessun profilo —",
+      profileNamePrompt: "Nome del profilo (es. AMS2, iRacing, ACC…) :",
+      profileDeleteConfirm: "Eliminare il profilo « {name} » ?",
+      profileSaveTitle: "Salva profilo",
+      profileDeleteTitle: "Elimina profilo",
       uiCol1: "1. Inserimento (Toolkit)",
       lblUp: "Superiore - Up (°)",
       lblDn: "Inferiore - Down (°)",
@@ -906,6 +950,10 @@
     document.getElementById('txtBtnOpenGuide').textContent = dict.openGuideBtn;
     document.getElementById('modalGuideTitle').textContent = dict.modalTitle;
     document.getElementById('lblHeadset').textContent = dict.lblHeadset;
+    document.getElementById('lblProfile').textContent = dict.lblProfile;
+    document.getElementById('btnSaveProfile').title = dict.profileSaveTitle;
+    document.getElementById('btnDeleteProfile').title = dict.profileDeleteTitle;
+    refreshProfileList(document.getElementById('profileSelect').value);
     document.getElementById('uiCol1').textContent = dict.uiCol1;
     document.getElementById('lblUp').textContent = dict.lblUp;
     document.getElementById('lblDn').textContent = dict.lblDn;
@@ -953,6 +1001,7 @@
     document.getElementById('inUp').value = hs.defaultUp;
     document.getElementById('inDn').value = hs.defaultDn;
     document.getElementById('inLL').value = hs.defaultLL;
+    document.getElementById('profileSelect').value = '';
     updateModalSpecs();
     recalculate();
   }
@@ -1130,6 +1179,93 @@
     document.getElementById('inUp').value = (Math.round(hs.nativeUp * 0.80 * 10) / 10).toFixed(1);
     document.getElementById('inDn').value = (Math.round(hs.nativeDn * 0.751 * 10) / 10).toFixed(1);
     recalculate();
+  });
+
+  // ---------- Profils nommés (localStorage, liste globale tous casques) ----------
+  const PROFILES_KEY = 'elhydroProfiles';
+
+  function loadProfiles() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]');
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function saveProfiles(arr) {
+    try { localStorage.setItem(PROFILES_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+  function headsetLabel(key) {
+    const o = document.querySelector(`#headsetSelect option[value="${key}"]`);
+    return o ? o.textContent : key;
+  }
+  function refreshProfileList(selected) {
+    const sel = document.getElementById('profileSelect');
+    const dict = I18N[currentLang];
+    const profiles = loadProfiles();
+    sel.innerHTML = '';
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = dict.profileNone;
+    sel.appendChild(opt0);
+    profiles.forEach((p, i) => {
+      const o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = `${p.name} (${headsetLabel(p.hs)})`;
+      sel.appendChild(o);
+    });
+    sel.value = selected || '';
+    if (sel.selectedIndex === -1) sel.value = '';
+  }
+
+  // Sélection d'un profil : bascule de casque si besoin + restauration des valeurs
+  document.getElementById('profileSelect').addEventListener('change', (e) => {
+    const idx = e.target.value;
+    if (idx === '') return;
+    const p = loadProfiles()[Number(idx)];
+    if (!p || !HEADSETS[p.hs]) return;
+    document.getElementById('headsetSelect').value = p.hs;
+    onHeadsetChange(p.hs);
+    document.getElementById('inUp').value = p.up;
+    document.getElementById('inDn').value = p.dn;
+    document.getElementById('inLL').value = p.ll;
+    document.getElementById('inCustomSS').value = p.ss;
+    e.target.value = idx;
+    recalculate();
+  });
+
+  // Enregistrer : nom libre (écrase le profil de même nom sur le même casque)
+  document.getElementById('btnSaveProfile').addEventListener('click', () => {
+    const dict = I18N[currentLang];
+    const sel = document.getElementById('profileSelect');
+    const profiles = loadProfiles();
+    const current = sel.value !== '' ? profiles[Number(sel.value)] : null;
+    const name = (window.prompt(dict.profileNamePrompt, current ? current.name : '') || '').trim();
+    if (!name) return;
+    const p = {
+      name,
+      hs: currentHeadsetKey,
+      up: parseFloat(document.getElementById('inUp').value) || 0,
+      dn: parseFloat(document.getElementById('inDn').value) || 0,
+      ll: parseFloat(document.getElementById('inLL').value) || 0,
+      ss: parseFloat(document.getElementById('inCustomSS').value) || 100
+    };
+    const i = profiles.findIndex(x => x.hs === p.hs && x.name === p.name);
+    if (i >= 0) profiles[i] = p; else profiles.push(p);
+    saveProfiles(profiles);
+    refreshProfileList(String(profiles.findIndex(x => x.hs === p.hs && x.name === p.name)));
+  });
+
+  // Supprimer le profil sélectionné (avec confirmation)
+  document.getElementById('btnDeleteProfile').addEventListener('click', () => {
+    const dict = I18N[currentLang];
+    const sel = document.getElementById('profileSelect');
+    if (sel.value === '') return;
+    const profiles = loadProfiles();
+    const p = profiles[Number(sel.value)];
+    if (!p) return;
+    if (!window.confirm(dict.profileDeleteConfirm.replace('{name}', p.name))) return;
+    profiles.splice(Number(sel.value), 1);
+    saveProfiles(profiles);
+    refreshProfileList('');
   });
 
   // Infobulles cliquables (?)
