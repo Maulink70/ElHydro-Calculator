@@ -332,6 +332,10 @@
       border-radius: 3px;
       margin-left: 3px;
     }
+    .visor-table th, .visor-table td {
+      padding: 4px 6px;
+      font-size: 0.75rem;
+    }
 
     /* Modal Guide */
     .modal-backdrop {
@@ -584,13 +588,13 @@
     </div>
     <div class="specs-box" id="visorCurrentVfov">--</div>
     <div class="table-wrap">
-      <table>
+      <table class="visor-table">
         <thead>
           <tr>
             <th id="thVisorCat">Catégorie</th>
-            <th id="thVisorUp">Up cible (°)</th>
-            <th id="thVisorDn">Down cible (°)</th>
-            <th id="thVisorTot">vFOV total (°)</th>
+            <th id="thVisorUp">Up (°)</th>
+            <th id="thVisorDn">Down (°)</th>
+            <th id="thVisorTot">Total (°)</th>
           </tr>
         </thead>
         <tbody id="visorTableBody"></tbody>
@@ -623,9 +627,9 @@
       visorAccordionTitle: "Catégories de visières",
       visorYourVfov: "Votre vFOV actuel : {v}°",
       thVisorCat: "Catégorie",
-      thVisorUp: "Up cible (°)",
-      thVisorDn: "Down cible (°)",
-      thVisorTot: "vFOV total (°)",
+      thVisorUp: "Up (°)",
+      thVisorDn: "Down (°)",
+      thVisorTot: "Total (°)",
       thScale: "Échelle",
       thRes: "Résolution (W × H)",
       targetTag: "Cible",
@@ -659,9 +663,9 @@
       visorAccordionTitle: "Motorsport Visor Categories",
       visorYourVfov: "Your current vFOV: {v}°",
       thVisorCat: "Visor Category",
-      thVisorUp: "Up Target (°)",
-      thVisorDn: "Down Target (°)",
-      thVisorTot: "Total vFOV (°)",
+      thVisorUp: "Up (°)",
+      thVisorDn: "Down (°)",
+      thVisorTot: "Total (°)",
       thScale: "Scale",
       thRes: "Resolution (W × H)",
       targetTag: "Target",
@@ -695,9 +699,9 @@
       visorAccordionTitle: "Categorie di visiere",
       visorYourVfov: "Il tuo vFOV attuale : {v}°",
       thVisorCat: "Categoria",
-      thVisorUp: "Up target (°)",
-      thVisorDn: "Down target (°)",
-      thVisorTot: "vFOV totale (°)",
+      thVisorUp: "Up (°)",
+      thVisorDn: "Down (°)",
+      thVisorTot: "Totale (°)",
       thScale: "Scala",
       thRes: "Risoluzione (W × H)",
       targetTag: "Target",
@@ -1102,9 +1106,9 @@
       if (isNearest) tr.classList.add('target-row');
       tr.innerHTML = `
         <td style="text-align:left;">${v.star ? '⭐ ' : ''}${v.cat}${v.recommended ? ' <span class="tag">Recommended</span>' : ''}</td>
-        <td>${v.up.toFixed(2)}°</td>
-        <td>${v.dn.toFixed(2)}°</td>
-        <td>${total.toFixed(2)}°</td>
+        <td>${v.up.toFixed(2)}</td>
+        <td>${v.dn.toFixed(2)}</td>
+        <td>${total.toFixed(2)}</td>
       `;
       visorBody.appendChild(tr);
     });
