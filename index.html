@@ -31,7 +31,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       gap: 6px;
     }
     h1 {
@@ -39,6 +39,7 @@
       margin: 0;
       color: #fff;
       font-weight: 700;
+      white-space: nowrap;
     }
     .top-controls {
       display: flex;
@@ -79,12 +80,12 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 8px 10px;
-      margin-bottom: 10px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      gap: 6px;
+      gap: 4px;
     }
     .select-row {
       display: flex;
@@ -126,7 +127,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .card {
       background: var(--card-bg);
@@ -204,7 +205,7 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .res-row {
       display: flex;
@@ -632,7 +633,7 @@
 <script>
   const I18N = {
     FR: {
-      title: "Calculateur ElHydro",
+      title: "ElHydro Calculator",
       openGuideBtn: "Tutoriel",
       modalTitle: "Tutoriel ElHydro",
       lblHeadset: "Casque :",
@@ -716,7 +717,7 @@
       specsText: "Hardware Specs: <strong>{name}</strong><br>Native Render Resolution (100%): <strong>{w} × {h}</strong> | Stock Angles: Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
     },
     IT: {
-      title: "Calcolatore ElHydro",
+      title: "ElHydro Calculator",
       openGuideBtn: "Guida",
       modalTitle: "Guida ElHydro",
       lblHeadset: "Visore :",
@@ -1001,7 +1002,7 @@
     document.getElementById('inUp').value = hs.defaultUp;
     document.getElementById('inDn').value = hs.defaultDn;
     document.getElementById('inLL').value = hs.defaultLL;
-    document.getElementById('profileSelect').value = '';
+    refreshProfileList('');
     updateModalSpecs();
     recalculate();
   }
@@ -1206,11 +1207,20 @@
     opt0.value = '';
     opt0.textContent = dict.profileNone;
     sel.appendChild(opt0);
-    profiles.forEach((p, i) => {
-      const o = document.createElement('option');
-      o.value = String(i);
-      o.textContent = `${p.name} (${headsetLabel(p.hs)})`;
-      sel.appendChild(o);
+    // Groupes par casque, le casque actuellement sélectionné en premier
+    const order = [currentHeadsetKey, ...Object.keys(HEADSETS).filter(k => k !== currentHeadsetKey)];
+    order.forEach(hsKey => {
+      const items = profiles.map((p, i) => ({ p, i })).filter(x => x.p.hs === hsKey);
+      if (!items.length) return;
+      const g = document.createElement('optgroup');
+      g.label = headsetLabel(hsKey);
+      items.forEach(({ p, i }) => {
+        const o = document.createElement('option');
+        o.value = String(i);
+        o.textContent = p.name;
+        g.appendChild(o);
+      });
+      sel.appendChild(g);
     });
     sel.value = selected || '';
     if (sel.selectedIndex === -1) sel.value = '';
