@@ -14,8 +14,8 @@
   <meta property="og:title" content="ElHydro Calculator">
   <meta property="og:description" content="VR FOV Crop & Resolution Calculator — Pimax, PSVR2, Quest 3, Reverb G2, Bigscreen Beyond">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://maulink70.github.io/ElhydroCalculator/">
-  <meta property="og:image" content="https://maulink70.github.io/ElhydroCalculator/icons/og-banner.png">
+  <meta property="og:url" content="https://maulink-vr.github.io/ElHydro-Calculator/">
+  <meta property="og:image" content="https://maulink-vr.github.io/ElHydro-Calculator/icons/og-banner.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -615,6 +615,8 @@
       <button class="close-btn" id="btnCloseGuide">✕</button>
     </div>
 
+    <button class="download-btn" id="btnOpenFullGuide" style="background:#059669; width:100%; margin-bottom:12px;">📘 Guide pas à pas</button>
+
     <div class="download-banner">
       <div style="font-size:0.85rem; font-weight:700; color:#f8fafc;" id="bannerDownloadText">Vous pouvez également télécharger le tutoriel détaillé ici</div>
       <button class="download-btn" id="btnDownloadPdf">📥 Télécharger le PDF</button>
@@ -699,6 +701,8 @@
       bannerText: "Vous pouvez également télécharger le tutoriel détaillé ici",
       downloadBtnText: "📥 Télécharger le PDF (FR)",
       pdfFile: "tutoriel-elhydro-fr.pdf",
+      stepGuideBtn: "📘 Guide pas à pas",
+      stepGuideUrl: "guide/",
       creditsHtml: "<strong>Crédits</strong><br>Méthode & convertisseur : <strong>ElHydro (@elydro)</strong><br>Système de crop : mod <strong>PrimaShock</strong> pour OpenXR Toolkit<br>Helmet Overlay : <a href='https://github.com/mledour/OpenXR-Layer-crop-fov' target='_blank' rel='noopener' style='color:#60a5fa;'>couche OpenXR de Le Dour</a>",
       specsText: "Données matérielles : <strong>{name}</strong><br>Résolution de rendu native (100 %) : <strong>{w} × {h}</strong> | Angles d'origine : Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
     },
@@ -749,6 +753,8 @@
       bannerText: "You can also download the detailed tutorial here",
       downloadBtnText: "📥 Download PDF (EN)",
       pdfFile: "guide-elhydro-en.pdf",
+      stepGuideBtn: "📘 Step-by-Step Guide",
+      stepGuideUrl: "guide/en.html",
       creditsHtml: "<strong>Credits</strong><br>Method & converter: <strong>ElHydro (@elydro)</strong><br>Crop system: <strong>PrimaShock</strong> mod for OpenXR Toolkit<br>Helmet Overlay: <a href='https://github.com/mledour/OpenXR-Layer-crop-fov' target='_blank' rel='noopener' style='color:#60a5fa;'>Le Dour's OpenXR layer</a>",
       specsText: "Hardware Specs: <strong>{name}</strong><br>Native Render Resolution (100%): <strong>{w} × {h}</strong> | Stock Angles: Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
     },
@@ -799,6 +805,8 @@
       bannerText: "È anche possibile scaricare il tutorial dettagliato qui",
       downloadBtnText: "📥 Scarica il PDF (IT)",
       pdfFile: "guida-elhydro-it.pdf",
+      stepGuideBtn: "📘 Guida passo passo",
+      stepGuideUrl: "guide/it.html",
       creditsHtml: "<strong>Crediti</strong><br>Metodo e convertitore : <strong>ElHydro (@elydro)</strong><br>Sistema di crop : mod <strong>PrimaShock</strong> per OpenXR Toolkit<br>Helmet Overlay : <a href='https://github.com/mledour/OpenXR-Layer-crop-fov' target='_blank' rel='noopener' style='color:#60a5fa;'>layer OpenXR di Le Dour</a>",
       specsText: "Dati hardware : <strong>{name}</strong><br>Risoluzione di rendering nativa (100 %) : <strong>{w} × {h}</strong> | Angoli stock : Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
     }
@@ -1023,6 +1031,7 @@
     document.getElementById('thRes').textContent = dict.thRes;
     document.getElementById('bannerDownloadText').textContent = dict.bannerText;
     document.getElementById('btnDownloadPdf').textContent = dict.downloadBtnText;
+    document.getElementById('btnOpenFullGuide').textContent = dict.stepGuideBtn;
 
     updateModalSpecs();
     document.getElementById('guideContent').innerHTML = GUIDES[lang];
@@ -1464,6 +1473,11 @@
   document.getElementById('btnDownloadPdf').addEventListener('click', () => {
     const rawFileName = I18N[currentLang].pdfFile;
     window.open(rawFileName, '_blank');
+  });
+
+  // Guide pas à pas : ouvre la page de la langue active dans un nouvel onglet
+  document.getElementById('btnOpenFullGuide').addEventListener('click', () => {
+    window.open(I18N[currentLang].stepGuideUrl, '_blank');
   });
 
   // Partage de configuration : applique les paramètres d'URL au chargement

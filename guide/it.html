@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metodo ElHydro – Guida interattiva Crop &amp; Risoluzione</title>
+<meta name="description" content="Guida passo passo al metodo ElHydro: crop tangenziale e risoluzione con OpenXR Toolkit (mod PrimaShock), più l'overlay del casco di Le Dour.">
+<link rel="icon" href="../icons/favicon-32.png">
+<style>
+  :root {
+    --bg: #0b0d13;
+    --card-bg: #141722;
+    --card-2: #1c2030;
+    --accent: #2563eb;
+    --accent-soft: #60a5fa;
+    --target: #facc15;
+    --cyan: #38bdf8;
+    --green: #059669;
+    --red: #ef4444;
+    --text: #f3f4f6;
+    --text-muted: #94a3b8;
+    --border: #242a3d;
+    --code: #86efac;
+    --rail: 250px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+  a { color: var(--accent-soft); }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--target); outline-offset: 2px; }
+
+  /* ---------- En-tête ---------- */
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(11,13,19,0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+  }
+  .top-inner {
+    max-width: 1180px; margin: 0 auto; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px; }
+  .brand h1 { font-size: 1.05rem; margin: 0; font-weight: 700; color: #fff; white-space: nowrap; }
+  .brand h1 span { color: var(--accent-soft); }
+  .brand small { display: block; color: var(--text-muted); font-size: 0.72rem; font-weight: 400; }
+  .top-actions { display: flex; gap: 6px; align-items: center; }
+  .btn {
+    background: var(--card-2); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 11px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    line-height: 1.2;
+  }
+  .btn:hover { border-color: var(--accent-soft); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.green { background: var(--green); border-color: var(--green); color: #fff; }
+  .btn.menu-toggle { display: none; }
+  .lang-switch { display: flex; gap: 4px; }
+  .lang-btn { background: var(--card-2); border: 1px solid var(--border); color: var(--text-muted); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-decoration: none; }
+  .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Barre de progression */
+  .progress { height: 4px; background: #11141d; }
+  .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--cyan)); transition: width .35s ease; }
+
+  /* ---------- Mise en page ---------- */
+  .layout { max-width: 1180px; margin: 0 auto; padding: 18px 16px 40px; display: grid; grid-template-columns: var(--rail) 1fr; gap: 24px; }
+
+  /* Rail des étapes */
+  nav.rail { position: sticky; top: 74px; align-self: start; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; }
+  nav.rail li { margin: 0 0 4px; }
+  nav.rail button {
+    width: 100%; text-align: left; background: none; border: 1px solid transparent; color: var(--text-muted);
+    padding: 8px 10px 8px 12px; border-radius: 6px; font-size: 0.82rem; cursor: pointer;
+    display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 8px; position: relative;
+  }
+  nav.rail button .n {
+    width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
+  }
+  nav.rail button .done { font-size: 0.7rem; color: var(--green); opacity: 0; }
+  nav.rail button.complete .done { opacity: 1; }
+  nav.rail button.complete .n { border-color: var(--green); color: var(--green); }
+  nav.rail button:hover { color: var(--text); background: var(--card-bg); }
+  nav.rail button.active { color: #fff; background: var(--card-bg); border-color: var(--border); }
+  nav.rail button.active .n { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* Repères de crop jaunes (clin d'œil au calculateur) sur l'étape active */
+  nav.rail button.active::before, nav.rail button.active::after {
+    content: ""; position: absolute; width: 9px; height: 9px; border-color: var(--target); border-style: solid;
+  }
+  nav.rail button.active::before { top: -2px; left: -2px; border-width: 2px 0 0 2px; border-radius: 2px 0 0 0; }
+  nav.rail button.active::after { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; border-radius: 0 0 2px 0; }
+  .rail-foot { margin-top: 14px; padding: 10px 12px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; font-size: 0.75rem; color: var(--text-muted); }
+  .rail-foot strong { color: var(--text); }
+  .rail-foot button { margin-top: 6px; }
+
+  /* Panneaux d'étape */
+  main { min-width: 0; }
+  section.step { display: none; }
+  section.step.active { display: block; }
+  .step-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 6px; flex-wrap: wrap; }
+  .step-head .k { color: var(--target); font-weight: 700; font-size: 0.85rem; }
+  .step-head h2 { margin: 0; font-size: 1.45rem; color: #fff; }
+  .lead { color: var(--text-muted); margin: 0 0 18px; max-width: 70ch; }
+
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin: 0 0 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 0.95rem; color: var(--accent-soft); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .card p { margin: 0 0 10px; max-width: 78ch; }
+  .card p:last-child, .card ul:last-child, .card ol:last-child { margin-bottom: 0; }
+  .card ul, .card ol { padding-left: 22px; margin: 0 0 10px; max-width: 78ch; }
+  .card li { margin-bottom: 5px; }
+
+  /* Encadrés */
+  .note { border-left: 3px solid var(--accent-soft); background: #0f172a; padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 0 0 14px; }
+  .note.warn { border-left-color: var(--red); background: #1a0f12; }
+  .note.ok { border-left-color: var(--green); background: #0b1a15; }
+  .note.target { border-left-color: var(--target); background: #1a1708; }
+  .note strong:first-child { display: block; margin-bottom: 4px; }
+  .note p { margin: 0 0 6px; max-width: 78ch; } .note p:last-child { margin: 0; }
+
+  /* Code */
+  code { font-family: "Roboto Mono", ui-monospace, Consolas, monospace; font-size: 0.86em; color: var(--code); background: #0b0d13; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); }
+  .codeblock { position: relative; background: #0b0d13; border: 1px solid var(--border); border-radius: 6px; padding: 10px 88px 10px 12px; margin: 0 0 12px; overflow-x: auto; }
+  .codeblock pre { margin: 0; font-family: "Roboto Mono", ui-monospace, Consolas, monospace; font-size: 0.82rem; color: var(--code); white-space: pre; }
+  .copy { position: absolute; top: 7px; right: 7px; font-size: 0.7rem; padding: 4px 8px; }
+
+  /* Images */
+  figure { margin: 0 0 14px; }
+  figure img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; cursor: zoom-in; display: block; }
+  figure.small img { max-width: 420px; }
+  figure.medium img { max-width: 620px; }
+  figcaption { font-size: 0.75rem; color: var(--text-muted); margin-top: 5px; }
+  .figrow { display: flex; gap: 12px; flex-wrap: wrap; }
+  .figrow figure { flex: 1 1 260px; }
+
+  /* Checklist */
+  .checklist { list-style: none; padding: 0; margin: 0; }
+  .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #1e2438; }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--green); cursor: pointer; flex: none; }
+  .checklist label { cursor: pointer; }
+  .checklist li.checked label { color: var(--text-muted); text-decoration: line-through; }
+
+  /* Tableau valeurs */
+  table.vals { border-collapse: collapse; width: 100%; max-width: 560px; font-size: 0.85rem; margin: 0 0 12px; }
+  table.vals th, table.vals td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+  table.vals th { background: var(--card-2); color: var(--text-muted); font-weight: 600; }
+  table.vals td.y { color: var(--target); font-weight: 700; }
+  table.vals td.g { color: var(--code); font-weight: 700; }
+  .tablewrap { overflow-x: auto; }
+
+  /* Navigation bas de page */
+  .pager { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .pager .btn { padding: 9px 14px; font-size: 0.85rem; }
+  .pager .hint { font-size: 0.72rem; color: var(--text-muted); }
+
+  /* Lightbox */
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; cursor: zoom-out; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #fff; padding: 8px 14px; border-radius: 6px; font-size: 0.8rem; opacity: 0; transition: .25s; pointer-events: none; z-index: 60; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Mobile */
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; padding-top: 12px; }
+    nav.rail { position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 85vw); background: var(--bg); border-right: 1px solid var(--border); padding: 70px 12px 20px; transform: translateX(-105%); transition: transform .25s; z-index: 30; overflow-y: auto; }
+    nav.rail.open { transform: translateX(0); }
+    .btn.menu-toggle { display: inline-flex; }
+    .brand h1 { font-size: 0.95rem; }
+    .step-head h2 { font-size: 1.2rem; }
+    .codeblock { padding-right: 12px; padding-top: 34px; }
+    .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 25; display: none; }
+    .backdrop.open { display: block; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto; } }
+
+  /* Impression : tout afficher, fond blanc */
+  @media print {
+    :root { --bg: #fff; --card-bg: #fff; --card-2: #f3f4f6; --text: #111; --text-muted: #444; --border: #bbb; --code: #166534; }
+    header.top, nav.rail, .pager, .copy, .toast, .lightbox, .backdrop { display: none !important; }
+    .layout { display: block; }
+    section.step { display: block !important; page-break-before: always; }
+    section.step:first-of-type { page-break-before: auto; }
+    code, .codeblock { background: #f3f4f6; }
+    .note { background: #f8fafc; }
+    a { color: #1d4ed8; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <button class="btn menu-toggle" id="menuToggle" aria-label="Apri i passi">☰ Passi</button>
+    <div class="brand">
+      <div>
+        <h1><span>ElHydro</span> – Crop &amp; Risoluzione</h1>
+        <small>Guida interattiva · OpenXR Toolkit · mod PrimaShock · Helmet Overlay</small>
+      </div>
+    </div>
+    <div class="lang-switch"><a class="lang-btn" data-lang="fr" href="index.html">FR</a><a class="lang-btn" data-lang="en" href="en.html">EN</a><a class="lang-btn" data-lang="it" href="it.html">IT</a></div>
+    <div class="top-actions">
+      <a class="btn green" href="../" title="Apri ElHydro Calculator">🧮 Calcolatore</a>
+      <a class="btn" id="pdfLink" href="#" title="Versione PDF stampabile">📄 PDF</a>
+      <button class="btn" id="printBtn" title="Stampa la guida completa">🖨️</button>
+    </div>
+  </div>
+  <div class="progress"><div id="progressBar"></div></div>
+</header>
+
+<div class="backdrop" id="backdrop"></div>
+
+<div class="layout">
+  <nav class="rail" id="rail" aria-label="Passi della guida">
+    <ol id="railList"></ol>
+    <div class="rail-foot">
+      <div><strong id="progressText">0 / 0</strong> punti spuntati</div>
+      <div>I tuoi progressi sono salvati su questo dispositivo.</div>
+      <button class="btn" id="resetBtn" style="font-size:.72rem;padding:4px 8px">Azzera</button>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <!-- ============ 1 ============ -->
+    <section class="step" data-title="Il principio" data-short="Principio">
+      <div class="step-head"><span class="k">Passo 1</span><h2>Il principio del metodo</h2></div>
+      <p class="lead">Due minuti per capire cosa fa il metodo ElHydro e cosa vi serve prima di iniziare.</p>
+
+      <div class="card">
+        <h3>Che cos'è?</h3>
+        <p>Il metodo ElHydro consiste nel ritagliare (crop) i pixel periferici invisibili o inutili in VR (crop tangenziale) per reinvestire tutta la potenza GPU risparmiata in un supersampling mirato, là dove l'occhio guarda davvero. Grazie a un calcolatore matematico dedicato, compensa la riduzione del campo visivo per mantenere una geometria ottica perfetta, aumentando drasticamente la nitidezza effettiva (PPD). Il risultato è una chiarezza visiva chirurgica senza ricorrere a driver di terze parti distruttivi, bloccando al contempo un framerate massimo e stabile.</p>
+        <p>In altre parole, e più semplicemente: si tagliano (crop) i bordi inutili dell'immagine che non guardate mai in gioco, per alleggerire la scheda grafica. La potenza così liberata viene reinvestita direttamente al centro della vostra visione, il che rende il gioco molto più nitido restando perfettamente fluido.</p>
+      </div>
+
+      <div class="card">
+        <h3>Cosa serve per mettere in pratica questo metodo</h3>
+        <ul>
+          <li><strong>OpenXR Toolkit – mod PrimaShock</strong>: è il toolkit che permette, tra le altre cose, di eseguire le operazioni di crop.</li>
+          <li><strong>Il file Excel del vostro visore</strong> (oppure <a href="../">ElHydro Calculator</a>, che usa le stesse formule): indica i valori corretti di cui avremo bisogno più avanti.</li>
+        </ul>
+      </div>
+
+      <div class="note target">
+        <strong>Il filo conduttore della guida</strong>
+        <p>Scegliere un crop → calcolare la risoluzione corrispondente → inserire i 6 valori di crop e i 2 valori di risoluzione nel Toolkit. Tutto il resto è preparazione e messa a punto.</p>
+      </div>
+
+      <div class="card">
+        <h3>Prima di continuare</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c1a"><label for="c1a">Ho capito che il crop toglie pixel che non vedo, e che la risoluzione va ricalcolata di conseguenza</label></li>
+          <li><input type="checkbox" id="c1b"><label for="c1b">So quale visore VR uso (il file Excel / il profilo del calcolatore dipende da questo)</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="step" data-title="Installare OpenXR Toolkit + mod PrimaShock" data-short="Installazione">
+      <div class="step-head"><span class="k">Passo 2</span><h2>Installare OpenXR Toolkit – mod PrimaShock (1.4.0)</h2></div>
+      <p class="lead">Prima il Toolkit originale, poi i file della mod PrimaShock sopra.</p>
+
+      <div class="card">
+        <h3>Link utili</h3>
+        <ul>
+          <li>Guida Pimax: <a href="https://eu.pimax.com/blogs/blogs/a-guide-to-primashock-s-openxr-toolkit-mod" target="_blank" rel="noopener">A guide to PrimaShock's OpenXR Toolkit mod</a></li>
+          <li>OpenXR Toolkit 1.3.2: <a href="https://github.com/mbucchia/OpenXR-Toolkit/releases/tag/1.3.2" target="_blank" rel="noopener">github.com/mbucchia/OpenXR-Toolkit</a></li>
+          <li>Mod PrimaShock: <a href="https://primashock.com/openxr-toolkit-mod-by-primashock-vr/" target="_blank" rel="noopener">primashock.com</a></li>
+          <li>Canale Discord: <a href="https://discord.com/channels/1371247671024680990/1536426623157534750" target="_blank" rel="noopener">discord.com/channels/…/1536426623157534750</a></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Passo A – Prerequisiti</h3>
+        <p>Prima di installare la mod, assicuratevi di aver installato la versione originale 1.3.2 di OpenXR Toolkit.</p>
+        <ol>
+          <li>Scaricate il file <code>OpenXR-Toolkit-v1.3.2.msi</code>.</li>
+          <li>Avviate il programma di installazione e seguite le istruzioni per completare la configurazione.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>Passo B – Installazione della mod PrimaShock</h3>
+        <p>Una volta installato il toolkit di base, seguite questi passaggi per applicare i file modificati:</p>
+        <ol>
+          <li><strong>Scaricare i file:</strong> scaricate il file DLL della mod tramite il pulsante di download del file ZIP. Decomprimetelo ed estraete il file o i file.</li>
+          <li><strong>Individuare la cartella di installazione:</strong> si trova generalmente in <code>C:\Program Files\OpenXR-Toolkit</code>.</li>
+          <li><strong>Fare un backup dei file:</strong> rinominate il file esistente <code>XR_APILAYER_MBUCCHIA_toolkit.dll</code> in qualcosa come <code>XR_APILAYER_MBUCCHIA_toolkit.back</code>.</li>
+          <li><strong>Copiare la nuova DLL:</strong> trascinate il file <code>XR_APILAYER_MBUCCHIA_toolkit.dll</code> estratto dallo ZIP PrimaShock nella cartella di installazione. Se usate la mod <em>3D BOOST + PERFORMANCE CROP</em>: fate un backup anche del file originale, poi copiate il nuovo file degli shader (<code>postprocess.hlsl</code>) in <code>C:\Program Files\OpenXR-Toolkit\Shaders</code>.</li>
+          <li><strong>Aggiornare gli shader:</strong> aprite la cartella <code>Shaders</code> nella directory di installazione.</li>
+          <li><strong>Fare un backup degli shader originali:</strong> create una copia di backup dei file shader originali.</li>
+          <li><strong>Copiare i nuovi shader:</strong> copiate il contenuto della cartella <code>shaders</code> proveniente dal file ZIP della mod in questa directory.</li>
+          <li><strong>Verificare:</strong> aprite l'applicazione companion di OpenXR Toolkit. Ora dovrebbe mostrare “Primal Shock mod”.</li>
+        </ol>
+        <div class="codeblock"><pre>C:\Program Files\OpenXR-Toolkit</pre><button class="btn copy">Copia</button></div>
+        <figure class="small"><img src="img/toolkit-companion.png" alt="Applicazione companion di OpenXR Toolkit che mostra PrimaShock combo v1.4.0" loading="lazy"><figcaption>L'applicazione companion deve indicare “Primashock combo (v1.4.0) is active”.</figcaption></figure>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c2a"><label for="c2a">OpenXR Toolkit 1.3.2 installato</label></li>
+          <li><input type="checkbox" id="c2b"><label for="c2b">DLL originale rinominata in <code>.back</code></label></li>
+          <li><input type="checkbox" id="c2c"><label for="c2c">DLL PrimaShock copiata nella cartella di installazione</label></li>
+          <li><input type="checkbox" id="c2d"><label for="c2d">Shader originali salvati, nuovi shader copiati</label></li>
+          <li><input type="checkbox" id="c2e"><label for="c2e">L'applicazione companion mostra “Primal Shock mod”</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="step" data-title="Il file Excel del vostro visore" data-short="File Excel">
+      <div class="step-head"><span class="k">Passo 3</span><h2>Scegliere il file Excel del proprio visore</h2></div>
+      <p class="lead">Ogni visore ha il proprio file: contiene le formule che trasformano un crop in una risoluzione.</p>
+
+      <div class="card">
+        <h3>Dove trovarlo</h3>
+        <p>I file Excel di ElHydro sono pubblicati su Discord: <a href="https://discordapp.com/channels/1371247671024680990/1530019814263754854" target="_blank" rel="noopener">discordapp.com/channels/…/1530019814263754854</a>. Esempio per il Pimax Dream Air:</p>
+        <figure class="medium"><img src="img/discord-excel.png" alt="File Excel Dream Air Normal FOV e Wide FOV pubblicati su Discord" loading="lazy"><figcaption>Dream Air – Normal FOV Calculator.xlsx e Dream Air – Wide FOV Calculator.xlsx</figcaption></figure>
+        <p>Aprite il file Excel e per il momento è tutto: ne avremo bisogno al passo 6.</p>
+      </div>
+
+      <div class="note ok">
+        <strong>Alternativa senza Excel</strong>
+        <p><a href="../">ElHydro Calculator</a> usa esattamente le stesse formule e gli stessi numeri dei file Excel, per 13 visori. Potete usarlo al posto del foglio di calcolo al passo 6 — stesso risultato, direttamente nel browser.</p>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c3a"><label for="c3a">File Excel del mio visore scaricato (o calcolatore aperto sul visore giusto)</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="step" data-title="Reset del Toolkit" data-short="Reset Toolkit">
+      <div class="step-head"><span class="k">Passo 4</span><h2>Reset del Toolkit</h2></div>
+      <p class="lead">Per ripartire da una base pulita se avete già usato OpenXR Toolkit in passato.</p>
+
+      <div class="card">
+        <h3>Perché e come</h3>
+        <p>Per essere sicuri di iniziare bene la configurazione, se avete già usato il toolkit, consiglio di fare un reset (non è obbligatorio, ma secondo me è meglio).</p>
+        <ol>
+          <li>Aprire il gioco</li>
+          <li>Aprire OpenXR Toolkit</li>
+          <li>Andare in <code>Menu</code> → <code>Reset</code> → <code>confirm</code></li>
+          <li><strong>Chiudete il toolkit, chiudete il gioco e riavviate completamente il visore</strong> (riavvio del visore e del servizio): così si riparte puliti.</li>
+        </ol>
+      </div>
+
+      <div class="note">
+        <strong>Prossimo passo: la scelta del crop</strong>
+        <p>La scelta del crop = la quantità di pixel che andremo a togliere.</p>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c4a"><label for="c4a">Reset eseguito (o Toolkit mai usato prima)</label></li>
+          <li><input type="checkbox" id="c4b"><label for="c4b">Visore e servizio riavviati completamente</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="step" data-title="Scelta del crop" data-short="Scelta del crop">
+      <div class="step-head"><span class="k">Passo 5</span><h2>Scelta del crop</h2></div>
+      <p class="lead">Quanto campo visivo togliamo in alto, in basso e ai lati — e perché si ragiona in gradi.</p>
+
+      <div class="card">
+        <h3>I sei valori</h3>
+        <p>Ora bisogna scegliere il crop <strong>Up</strong> (alto), <strong>Down</strong> (basso), <strong>Left/Left</strong> (sinistra), <strong>Right/Right</strong> (destra), oltre al crop <strong>Left/Right</strong> e <strong>Right/Left</strong> (quelli vicino al naso). ElHydro propone dei valori in base al tipo di auto; potete scegliere uno di questi valori e provarlo. Questi valori sono indicativi e potrete scegliere quello che vi si addice meglio. La sensazione, la preferenza visiva, la GPU, la CPU e molti altri criteri non permettono di indicare un valore che possa essere considerato il migliore.</p>
+        <figure class="medium"><img src="img/tableau-crop-categories.png" alt="Tabella ElHydro dei crop Up e Down per categoria di auto" loading="lazy"><figcaption>Valori indicativi per categoria (F1, LMP, GTE, GT3, TCR…); la riga “Balanced / All Around” è il punto di partenza consigliato.</figcaption></figure>
+      </div>
+
+      <div class="card">
+        <h3>I miei valori personali</h3>
+        <p>Personalmente uso questi valori, ma dipendono ancora una volta dalla mia sensazione, dalla potenza del mio PC, ecc.: 70 o 75 Up, 90 o 95 Down e 99% ai lati. Il crop vicino al naso (L/R e R/L) viene calcolato tramite il file Excel.</p>
+        <figure class="small"><img src="img/toolkit-fov-valeurs.png" alt="Field of view nel Toolkit: Up 70% (31.2°), Down 90% (-40.1°), Left/Left 99% (-54.5°), Left/Right 98% (44.6°), Right/Left 98% (-44.6°), Right/Right 99% (54.5°)" loading="lazy"><figcaption>Il numero tra parentesi è l'angolo in gradi: è quello che conta.</figcaption></figure>
+      </div>
+
+      <div class="note target">
+        <strong>Percentuali vs gradi: cosa bisogna capire bene</strong>
+        <p>La percentuale (%) indica semplicemente la porzione della vista originale che mantenete. Ad esempio, <strong>70%</strong> significa che mantenete il 70% del campo visivo nativo del visore e ne eliminate il 30%.</p>
+        <p>I gradi (°) misurano l'apertura angolare reale percepita dai vostri occhi. È questo valore in gradi che va tenuto a mente, perché è l'unica unità ottica universale: ogni modello di visore ha un campo visivo nativo diverso, e un'impostazione del 70% non darà lo stesso angolo su un Dream Air rispetto a un altro visore.</p>
+        <p><strong>È fondamentale per il seguito:</strong> nel foglio Excel di ElHydro dovrete inserire il valore in gradi (il numero tra parentesi nel Toolkit, es. <code>31.20°</code>) e non la percentuale, affinché le formule di risoluzione siano esatte.</p>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c5a"><label for="c5a">Ho scelto i miei valori Up, Down e Left/Left (in %)</label></li>
+          <li><input type="checkbox" id="c5b"><label for="c5b">Ho annotato i 3 angoli in gradi corrispondenti (numero tra parentesi)</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="step" data-title="Valori in Excel" data-short="Valori Excel">
+      <div class="step-head"><span class="k">Passo 6</span><h2>Valori in Excel</h2></div>
+      <p class="lead">Tre angoli in ingresso, una risoluzione in uscita. È qui che il metodo fa i suoi calcoli.</p>
+
+      <div class="card">
+        <h3>Aprite il file Excel</h3>
+        <figure class="medium"><img src="img/excel-feuille.png" alt="Foglio Excel ElHydro: celle di input Up, Dn, Left Left cerchiate in verde, tabella di supersampling cerchiata in blu" loading="lazy"><figcaption>In verde: le 3 celle da compilare. In blu: la tabella di supersampling dove scegliete la risoluzione.</figcaption></figure>
+      </div>
+
+      <div class="card">
+        <h3>In verde: le 3 celle (Up, Dn, Left Left)</h3>
+        <p>Sono le <strong>uniche ed esclusive celle da modificare manualmente</strong> nel foglio di calcolo. Dovete riportarvi esattamente gli angoli in gradi che avete scelto (qui: <code>31.20°</code>, <code>40.10°</code> e <code>54.50°</code>). Tutti gli altri valori sottostanti (Left Right, Right Left, Right Right) vengono calcolati automaticamente dalla formula geometrica: <strong>non modificateli mai a mano</strong>.</p>
+        <div class="tablewrap"><table class="vals">
+          <tr><th>Cella</th><th>%</th><th>Angolo da inserire</th></tr>
+          <tr><td>Up</td><td>70%</td><td class="y">31,20</td></tr>
+          <tr><td>Dn</td><td>90%</td><td class="y">40,10</td></tr>
+          <tr><td>Left Left (LL)</td><td>99%</td><td class="y">54,50</td></tr>
+          <tr><td colspan="3" style="color:var(--text-muted);font-size:.78rem">Left Right / Right Left / Right Right: calcolati automaticamente, non toccare</td></tr>
+        </table></div>
+      </div>
+
+      <div class="note warn">
+        <strong>Attenzione a inserire i gradi e non le percentuali!</strong>
+        <p>Nell'esempio sopra: per Up si digita <strong>31,20</strong> e non 70.</p>
+      </div>
+
+      <div class="card">
+        <h3>In blu: il supersampling che scegliete</h3>
+        <p><strong>Riga 110% SS (5324 × 3220)</strong>: è l'<strong>obiettivo di chiarezza nativa (0,00% di differenza PPD-Eff)</strong>. Applicando questo livello, compensate matematicamente la perdita di superficie e ritrovate esattamente la stessa densità di pixel per grado del visore non ritagliato.</p>
+        <p><strong>I livelli superiori</strong> (esempio: il livello 140% a 6006 × 3633): non appena si supera la riga dello 0,00%, si entra nel <strong>supersampling puro (Super Sampling)</strong>.</p>
+        <p>Per iniziare, provate i 2 valori in giallo che appariranno nel vostro file Excel. Ad esempio, iniziate con il valore 0,00% (in questo caso 5324 × 3220) e salite gradualmente in base alla vostra scheda grafica e al vostro PC. Ad esempio, se scelgo il 160%, inserirò questi valori nel toolkit: <code>6421 × 3883</code>.</p>
+        <div class="figrow">
+          <figure><img src="img/excel-tableau-ss-160.png" alt="Tabella di supersampling con la riga 160% (6421 x 3883) evidenziata" loading="lazy"><figcaption>La tabella SS: righe gialle = punti di partenza, riga 160% = esempio usato qui.</figcaption></figure>
+          <figure><img src="img/toolkit-override-resolution.png" alt="Override resolution nel Toolkit: 6421 x 3883" loading="lazy"><figcaption>Lo stesso valore riportato nel Toolkit (passo 8).</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="note warn">
+        <strong>Questo è un esempio</strong>
+        <p>I valori sono diversi a seconda del visore e del crop. Assicuratevi di usare il file Excel giusto e di guardare la riga giusta una volta inseriti i 3 valori (l'immagine sopra è solo per il Pimax Dream Air).</p>
+      </div>
+
+      <div class="note ok">
+        <strong>Più veloce: ElHydro Calculator</strong>
+        <p>Selezionate il visore, inserite i 3 angoli, scegliete il livello di supersampling: la risoluzione e i 6 valori di crop compaiono direttamente. <a class="btn green" href="../" style="margin-top:6px">🧮 Apri il calcolatore</a></p>
+      </div>
+
+      <div class="card">
+        <h3>In sintesi</h3>
+        <ol>
+          <li>Digitate i 3 valori (in gradi) nell'area incorniciata in verde</li>
+          <li>Scegliete la risoluzione nella tabella blu</li>
+          <li>Annotate i <strong>6 numeri del crop</strong> e i <strong>2 numeri della risoluzione</strong></li>
+        </ol>
+        <div class="figrow">
+          <figure class="small"><img src="img/excel-cellules-vertes.png" alt="Riepilogo delle celle Up, Dn, LL inserite e LR, RL, RR calcolate" loading="lazy"></figure>
+          <figure class="small"><img src="img/excel-tableau-ss.png" alt="Tabella dei livelli di supersampling" loading="lazy"></figure>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c6a"><label for="c6a">3 angoli inseriti in gradi (Up, Dn, LL) nelle celle verdi</label></li>
+          <li><input type="checkbox" id="c6b"><label for="c6b">Livello di supersampling scelto (parto dalla riga 0,00%)</label></li>
+          <li><input type="checkbox" id="c6c"><label for="c6c">Ho annotato i miei 6 valori di crop e i 2 valori di risoluzione</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 7 ============ -->
+    <section class="step" data-title="Configurazione del Toolkit" data-short="Config. Toolkit">
+      <div class="step-head"><span class="k">Passo 7</span><h2>Configurazione del Toolkit</h2></div>
+      <p class="lead">Prima di inserire il crop, si regola la scheda Performance. Niente paura: potrete testare e regolare i valori direttamente in gioco con il toolkit — vedrete delle bande nere se applicate un crop troppo aggressivo, ad esempio.</p>
+
+      <div class="card">
+        <h3>Aprite il gioco e aprite il toolkit adesso</h3>
+        <ol>
+          <li>Riavviate il gioco e il toolkit.</li>
+          <li>In <strong>Performance</strong>: impostate <strong>CAS</strong> con <strong>Size 100%</strong>. Lo <strong>Sharpness</strong> lo regolate in base ai risultati ottenuti in gioco (da testare quindi: io a volte lo metto a 0%, a volte a 20% e a volte a 75% a seconda del gioco, quindi sta a voi scegliere).</li>
+          <li>Impostate il <strong>Turbo mode</strong> su <strong>ON</strong>.</li>
+        </ol>
+        <figure class="medium"><img src="img/toolkit-performance.png" alt="Scheda Performance del Toolkit: Upscaling CAS, Size 100%, Sharpness 0%, Turbo mode On" loading="lazy"><figcaption>Scheda Performance: CAS al 100%, Turbo mode su On.</figcaption></figure>
+        <p>Poi passiamo alla parte che ci interessa di più: il crop.</p>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c7a"><label for="c7a">Upscaling/Sharpening = CAS, Size 100%</label></li>
+          <li><input type="checkbox" id="c7b"><label for="c7b">Turbo mode = ON</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 8 ============ -->
+    <section class="step" data-title="Inserimento del crop" data-short="Inserimento crop">
+      <div class="step-head"><span class="k">Passo 8</span><h2>Inserimento del crop e della risoluzione</h2></div>
+      <p class="lead">Il passo decisivo: i 6 valori di crop e i 2 valori di risoluzione nella scheda System.</p>
+
+      <div class="card">
+        <h3>Nella scheda System</h3>
+        <ol>
+          <li>Andate in <strong>System</strong>.</li>
+          <li>Inserite i <strong>6 valori di crop</strong> (Field of view → Advanced).</li>
+          <li>Impostate <strong>“Override resolution” su YES</strong>.</li>
+          <li>Inserite i <strong>2 valori</strong> in “Override resolution” (width e height).</li>
+          <li>Non toccate i valori nel riquadro rosso (indipendentemente dai valori indicati).</li>
+          <li>Chiudete il toolkit tramite <strong>“Exit menu”</strong>.</li>
+          <li>Riavviate il gioco e normalmente è tutto a posto.</li>
+        </ol>
+        <figure class="medium"><img src="img/toolkit-system-crop.png" alt="Scheda System del Toolkit: Override resolution 6421x3883, Field of view Advanced con i 6 valori, zona rossa Native resolution / Apply da non toccare" loading="lazy"><figcaption>In verde: ciò che inserite. In rosso: ciò che non va mai toccato.</figcaption></figure>
+      </div>
+
+      <div class="note warn">
+        <strong>Non cliccate MAI su APPLY</strong>
+        <p>Non toccate i valori nel riquadro rosso (“Enter your native resolution” e “Apply resolution”). Se per errore avete cliccato Apply e confermato, rifate un reset del toolkit (passo 4) e riavviate tutto per sicurezza.</p>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c8a"><label for="c8a">6 valori di crop inseriti (Up, Down, Left/Left, Left/Right, Right/Left, Right/Right)</label></li>
+          <li><input type="checkbox" id="c8b"><label for="c8b">Override resolution = YES, width e height inseriti</label></li>
+          <li><input type="checkbox" id="c8c"><label for="c8c">Riquadro rosso non toccato, nessun clic su APPLY</label></li>
+          <li><input type="checkbox" id="c8d"><label for="c8d">Toolkit chiuso tramite Exit menu, gioco riavviato</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section class="step" data-title="Impostazioni complementari" data-short="Complementi">
+      <div class="step-head"><span class="k">Passo 9</span><h2>Alcune precisazioni e impostazioni complementari</h2></div>
+      <p class="lead">Le impostazioni attorno al metodo che fanno la differenza sull'immagine e sugli fps.</p>
+
+      <div class="card">
+        <h3>Toolkit e Pimax Play</h3>
+        <ul>
+          <li>Il <strong>3D boost</strong>: per quanto mi riguarda lo lascio a 0 (consiglio anche di ElHydro).</li>
+          <li>I driver <strong>SBOYS 3 devono essere assolutamente disattivati</strong> (i profili di distorsione non corrispondono bene ai valori del file Excel).</li>
+          <li>In Pimax Play ho la <strong>quality a 1.0</strong>.</li>
+          <li><strong>Sun Glasses: ON (Light)</strong> — impostazione imprescindibile consigliata da ElHydro sui pannelli OLED del Dream Air per rimuovere il velo opaco e aprire i neri. Provate voi stessi: in alcuni giochi preferisco disattivarla (Appearance → Post processing ON).</li>
+          <li><strong>Vibrance: da 15 a 25</strong> — per compensare la colorimetria piatta e aumentare il contrasto dei cordoli e della pista (Appearance → Post processing ON).</li>
+          <li>Disattivare lo <strong>Smart Smoothing</strong> in Pimax Play.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>La combo magica per l'anti-aliasing: NVIDIA MFAA + MSAA 2x in gioco</h3>
+        <p>È uno dei pilastri segreti del metodo ElHydro per ottenere un'immagine ultra-nitida senza penalizzare le prestazioni:</p>
+        <ul>
+          <li><strong>Nel Pannello di controllo NVIDIA:</strong> andate in <em>Gestisci le impostazioni 3D</em> → selezionate il vostro gioco (o le impostazioni globali) e impostate <strong>Multi-Frame Sampled AA (MFAA)</strong> su <strong>Attivato (On)</strong>.</li>
+          <li><strong>Nelle impostazioni grafiche del gioco (es. AMS2):</strong> impostate l'anti-aliasing su <strong>MSAA 2x (Low/Medium)</strong> e disattivate tassativamente il <strong>Post-Processing Anti-Aliasing (Off)</strong>.</li>
+        </ul>
+        <p><em>Perché questa impostazione?</em> La tecnologia hardware MFAA di NVIDIA combina i campioni temporali per trasformare automaticamente un MSAA 2x in un rendering equivalente al <strong>MSAA 4x</strong>, mantenendo il costo prestazionale irrisorio del 2x. Disattivare il Post-Processing AA evita invece di applicare un filtro di sfocatura software distruttivo.</p>
+      </div>
+
+      <div class="note">
+        <strong>Bisogna testare</strong>
+        <p>Giocate sulla grandezza del crop e sul supersampling (valori in Override resolution) per trovare il giusto equilibrio, in particolare in termini di fps. Vi do il procedimento, ma i valori sono spesso personali, secondo i propri gusti e il proprio PC: i risultati in fps o qualità possono variare.</p>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c9a"><label for="c9a">Driver SBOYS 3 disattivati</label></li>
+          <li><input type="checkbox" id="c9b"><label for="c9b">Pimax Play: quality 1.0, Smart Smoothing disattivato</label></li>
+          <li><input type="checkbox" id="c9c"><label for="c9c">NVIDIA MFAA attivato + MSAA 2x in gioco, Post-Processing AA off</label></li>
+          <li><input type="checkbox" id="c9d"><label for="c9d">Sun Glasses / Vibrance testati per ogni gioco</label></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 10 ============ -->
+    <section class="step" data-title="Helmet Overlay (opzionale)" data-short="Helmet Overlay">
+      <div class="step-head"><span class="k">Passo 10</span><h2>Aggiungere l'overlay del casco (Helmet Overlay)</h2></div>
+      <p class="lead">Opzionale: un casco da corsa realistico sovrapposto all'immagine, controllato dal layer OpenXR di Le Dour, sopra il crop PrimaShock.</p>
+
+      <div class="card">
+        <h3>Il principio</h3>
+        <p>Questo sistema aggiunge, in VR, un overlay del casco realistico: si ha davvero l'impressione di guardare attraverso un casco da corsa, e non più semplicemente di vedere il gioco attraverso il visore.</p>
+        <p>Questa configurazione si basa sul sistema sviluppato da <strong>@elydro</strong>, basato su PrimaShock. PrimaShock stesso è stato creato da un altro sviluppatore: @elydro ha adattato il sistema PrimaShock tramite il suo convertitore, che permette di calcolare la risoluzione corretta corrispondente al crop del FOV desiderato. Il casco viene poi aggiunto e controllato tramite il layer OpenXR di Le Dour.</p>
+      </div>
+
+      <div class="card">
+        <h3>1. Prima il crop e la risoluzione</h3>
+        <p>Prima di installare l'overlay del casco, la vostra configurazione PrimaShock (passi da 1 a 9) deve essere già installata e funzionante. Per questo sistema di casco, il crop di partenza consigliato è:</p>
+        <div class="tablewrap"><table class="vals">
+          <tr><th>Crop</th><th>Valore</th></tr>
+          <tr><td>Alto (Top)</td><td class="y">20%</td></tr>
+          <tr><td>Basso (Bottom)</td><td class="y">24,9%</td></tr>
+        </table></div>
+        <p>Questi valori funzionano molto bene come punto di partenza generale e si adattano bene a molti design di casco.</p>
+        <div class="note target">
+          <strong>Importante: calcolare la risoluzione corretta</strong>
+          <p>Quando cambiate il crop a 20% in alto / 24,9% in basso, dovete anche adattare la risoluzione di rendering. Usate il convertitore di @elydro (il file Excel) per calcolare la risoluzione corrispondente a questo crop, poi inseritela in OpenXR Toolkit come spiegato nei passi da 6 a 8. In <a href="../">ElHydro Calculator</a>, il pulsante <strong>Helmet</strong> applica direttamente questo preset.</p>
+        </div>
+        <ul>
+          <li>Impostare il crop a 20% in alto / 24,9% in basso.</li>
+          <li>Calcolare la risoluzione corrispondente (Excel o calcolatore).</li>
+          <li>Inserire la risoluzione calcolata in OpenXR Toolkit.</li>
+          <li>Poi passare all'installazione dell'overlay.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>2. Installare il layer OpenXR di Le Dour</h3>
+        <p>Scaricate il layer OpenXR FOV Crop / Helmet Overlay di Le Dour: <a href="https://github.com/mledour/OpenXR-Layer-crop-fov/releases/latest" target="_blank" rel="noopener">Le Dour – ultima release GitHub</a>. Il metodo più semplice è usare l'installer. Il programma viene normalmente installato in:</p>
+        <div class="codeblock"><pre>C:\Program Files\OpenXR-Layer-fov-crop\</pre><button class="btn copy">Copia</button></div>
+        <p>Se invece scaricate la versione ZIP, estraete i file in una cartella permanente e seguite le istruzioni di installazione incluse. I file di configurazione da modificare si trovano qui (incollate questo percorso nella barra degli indirizzi di Esplora file):</p>
+        <div class="codeblock"><pre>%LOCALAPPDATA%\XR_APILAYER_MLEDOUR_fov_crop\</pre><button class="btn copy">Copia</button></div>
+        <figure class="medium"><img src="img/helmet-dossier.jpg" alt="Cartella di configurazione di Le Dour con la cartella helmets, settings.json e i file per gioco" loading="lazy"><figcaption>La cartella contiene <code>settings.json</code>, la cartella <code>helmets</code> e un file di configurazione creato automaticamente per ogni gioco avviato.</figcaption></figure>
+        <p>La prima volta, iniziate modificando <code>settings.json</code>. Dopo il primo avvio di un gioco, Le Dour crea automaticamente un file separato per quel gioco: ogni gioco può quindi avere la propria configurazione del casco.</p>
+      </div>
+
+      <div class="card">
+        <h3>3. Attivare il sistema</h3>
+        <p>Aprite <code>settings.json</code>, oppure il file <code>&lt;gioco&gt;_settings.json</code> specifico una volta creato.</p>
+        <figure class="medium"><img src="img/helmet-settings-json.jpg" alt="File settings.json di Le Dour aperto nell'editor" loading="lazy"><figcaption>Il file settings.json generale. I valori di crop visibili qui sono stati usati solo per i test.</figcaption></figure>
+        <p>All'inizio del file, e nella sezione <code>helmet_overlay</code>, dovete avere:</p>
+        <div class="codeblock"><pre>"enabled": true</pre><button class="btn copy">Copia</button></div>
+        <p>Se uno dei due è su <code>false</code>, l'overlay non funzionerà. Per la modifica in tempo reale, aggiungete anche:</p>
+        <div class="codeblock"><pre>"live_edit": true</pre><button class="btn copy">Copia</button></div>
+      </div>
+
+      <div class="card">
+        <h3>4. Impostare tutti i crop di Le Dour a 0</h3>
+        <p>Il crop è già gestito da PrimaShock: non vogliamo che Le Dour applichi un secondo crop sopra di esso. Tutti i valori di crop del JSON di Le Dour devono quindi essere a 0:</p>
+        <div class="codeblock"><pre>"crop_left_percent": 0,
+"crop_right_percent": 0,
+"crop_top_percent": 0,
+"crop_bottom_percent": 0</pre><button class="btn copy">Copia</button></div>
+        <div class="note warn"><strong>Importante</strong><p>Se in uno screenshot compaiono altri numeri in questi campi, ignorateli: sono stati usati per i test. Per questa configurazione tutto deve essere a 0, affinché i due sistemi di crop non si sovrappongano.</p></div>
+        <figure class="medium"><img src="img/helmet-config-jeu.jpg" alt="File di configurazione per gioco con i crop a 0 e un PNG di casco personalizzato" loading="lazy"><figcaption>Un file per gioco, crop a 0, PNG di casco personalizzato selezionato.</figcaption></figure>
+      </div>
+
+      <div class="card">
+        <h3>5. Regolare il casco</h3>
+        <p>Le tre impostazioni principali:</p>
+        <div class="codeblock"><pre>"distance_m": 0.15,
+"horizontal_fov_deg": 125,
+"vertical_offset_deg": -14</pre><button class="btn copy">Copia</button></div>
+        <p>Questi valori sono estremamente personali: dipende dal vostro visore, dai vostri occhi, dal design del casco e da quanto vicino volete percepirlo.</p>
+        <ul>
+          <li><strong>Distanza</strong> — <code>distance_m</code> controlla la vicinanza del casco. Più basso = più vicino: 0.25 più lontano, 0.15 molto più vicino e realistico, 0.10 / 0.09 / 0.08 estremamente vicino. Sotto circa 0.10, i guanciali possono quasi sovrapporsi al centro della visione.</li>
+          <li><strong>FOV orizzontale</strong> — <code>horizontal_fov_deg</code> controlla la larghezza apparente. Se i guanciali sono troppo vicini dopo aver ridotto la distanza, aumentate il FOV: questo allontana i lati. Ma allarga anche l'apertura della visiera in verticale; distanza e FOV vanno regolati insieme.</li>
+          <li><strong>Offset verticale</strong> — <code>vertical_offset_deg</code> sposta il casco: positivo = sale, negativo = scende. Regolatelo finché la visiera non è naturale attorno ai vostri occhi.</li>
+        </ul>
+        <p>Impostazioni di riferimento dell'autore: distanza 0.15, FOV 125, offset -14. Provatele prima, poi affinate.</p>
+      </div>
+
+      <div class="card">
+        <h3>6. Modifica in tempo reale e caschi aggiuntivi</h3>
+        <p>Con <code>live_edit: true</code> potete lasciare il gioco in esecuzione: cambiate un numero, salvate (<strong>Ctrl + S</strong>) e la modifica viene applicata in VR. Solo il cambio dell'immagine del casco richiede un riavvio del gioco.</p>
+        <p>Le Dour include solo alcuni PNG di base. Mettete i vostri PNG di casco in:</p>
+        <div class="codeblock"><pre>%LOCALAPPDATA%\XR_APILAYER_MLEDOUR_fov_crop\helmets\</pre><button class="btn copy">Copia</button></div>
+        <p>Poi, nella sezione <code>helmet_overlay</code> del JSON del gioco, sostituite solo il nome del file:</p>
+        <div class="codeblock"><pre>"image": "Ferrari 488 GTE.png"</pre><button class="btn copy">Copia</button></div>
+        <p>Il nome deve corrispondere esattamente al PNG (spazi, maiuscole, <code>.png</code>). La cosa più sicura è copiare e incollare il nome del file.</p>
+      </div>
+
+      <div class="note warn">
+        <strong>Avvertenza JSON</strong>
+        <p>Non modificate la struttura del file: solo <code>true</code>/<code>false</code> dove indicato, i numeri del crop, distanza, FOV, offset e il nome del PNG. Una virgola, una virgoletta o una parentesi cancellata per errore può bloccare il sistema.</p>
+      </div>
+
+      <div class="card">
+        <h3>Risultato</h3>
+        <div class="figrow">
+          <figure><img src="img/helmet-exemple-1.jpg" alt="Vista cockpit frontale con overlay del casco" loading="lazy"><figcaption>Vista cockpit frontale, overlay correttamente posizionato.</figcaption></figure>
+          <figure><img src="img/helmet-exemple-2.jpg" alt="Vista ravvicinata del volante con overlay del casco" loading="lazy"><figcaption>Vista ravvicinata cockpit / volante.</figcaption></figure>
+          <figure><img src="img/helmet-exemple-3.jpg" alt="Vista cockpit angolata con overlay del casco" loading="lazy"><figcaption>Vista angolata, da un'altra prospettiva.</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Checklist</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" id="c10a"><label for="c10a">Crop 20% / 24,9% applicato e risoluzione ricalcolata nel Toolkit</label></li>
+          <li><input type="checkbox" id="c10b"><label for="c10b">Layer OpenXR di Le Dour installato</label></li>
+          <li><input type="checkbox" id="c10c"><label for="c10c"><code>enabled: true</code> (file e sezione helmet_overlay), <code>live_edit: true</code></label></li>
+          <li><input type="checkbox" id="c10d"><label for="c10d">Tutti i crop di Le Dour a 0</label></li>
+          <li><input type="checkbox" id="c10e"><label for="c10e">Distanza / FOV / offset regolati in tempo reale</label></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Grazie</h3>
+        <p>Questa mod è stata realizzata gratuitamente da <strong>ElHydro</strong>. Per ringraziarlo potete fare una donazione qui: <a href="https://www.buymeacoffee.com/Elhydro" target="_blank" rel="noopener">buymeacoffee.com/Elhydro</a>. Overlay del casco: layer OpenXR di <a href="https://github.com/mledour/OpenXR-Layer-crop-fov" target="_blank" rel="noopener">Le Dour</a>.</p>
+      </div>
+    </section>
+
+    <div class="pager">
+      <button class="btn" id="prevBtn">← Precedente</button>
+      <span class="hint">Frecce ← → della tastiera per navigare</span>
+      <button class="btn primary" id="nextBtn">Avanti →</button>
+    </div>
+  </main>
+</div>
+
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+<div class="toast" id="toast">Copiato</div>
+
+<script>
+(function () {
+  // ---------- Configuration : à adapter à votre dépôt ----------
+  var PDF_URL = '../METODO_ELHYDRO_-_CROP_E_RISOLUZIONE_IT.pdf'; // chemin du PDF FR dans le dépôt
+  var STORAGE_KEY = 'elhydro-guide';
+
+  document.getElementById('pdfLink').href = PDF_URL;
+
+  var steps = Array.prototype.slice.call(document.querySelectorAll('section.step'));
+  var railList = document.getElementById('railList');
+  var rail = document.getElementById('rail');
+  var backdrop = document.getElementById('backdrop');
+  var current = 0;
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { state = {}; }
+
+  // Rail
+  steps.forEach(function (s, i) {
+    var li = document.createElement('li');
+    var b = document.createElement('button');
+    b.innerHTML = '<span class="n">' + (i + 1) + '</span><span>' + s.dataset.short + '</span><span class="done">✔</span>';
+    b.addEventListener('click', function () { go(i); closeMenu(); });
+    li.appendChild(b); railList.appendChild(li);
+  });
+  var railBtns = railList.querySelectorAll('button');
+
+  function go(i, noScroll) {
+    current = Math.max(0, Math.min(steps.length - 1, i));
+    steps.forEach(function (s, k) { s.classList.toggle('active', k === current); });
+    railBtns.forEach(function (b, k) { b.classList.toggle('active', k === current); });
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').textContent = current === steps.length - 1 ? 'Torna all\'inizio' : 'Avanti →';
+    history.replaceState(null, '', '#etape-' + (current + 1));
+    if (!noScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.title = 'Passo ' + (current + 1) + ' · ' + steps[current].dataset.title + ' – Metodo ElHydro';
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', function () { go(current - 1); });
+  document.getElementById('nextBtn').addEventListener('click', function () { go(current === steps.length - 1 ? 0 : current + 1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight') go(current + 1);
+    if (e.key === 'ArrowLeft') go(current - 1);
+    if (e.key === 'Escape') { closeLightbox(); closeMenu(); }
+  });
+
+  // Checklists persistantes
+  var boxes = document.querySelectorAll('.checklist input[type=checkbox]');
+  boxes.forEach(function (cb) {
+    if (state[cb.id]) cb.checked = true;
+    cb.closest('li').classList.toggle('checked', cb.checked);
+    cb.addEventListener('change', function () {
+      state[cb.id] = cb.checked;
+      cb.closest('li').classList.toggle('checked', cb.checked);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+      updateProgress();
+    });
+  });
+
+  function updateProgress() {
+    var total = boxes.length, done = 0;
+    boxes.forEach(function (cb) { if (cb.checked) done++; });
+    document.getElementById('progressBar').style.width = (total ? done / total * 100 : 0) + '%';
+    document.getElementById('progressText').textContent = done + ' / ' + total;
+    steps.forEach(function (s, i) {
+      var sb = s.querySelectorAll('.checklist input');
+      var all = sb.length > 0 && Array.prototype.every.call(sb, function (x) { return x.checked; });
+      railBtns[i].classList.toggle('complete', all);
+    });
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    if (!confirm('Deselezionare tutte le caselle della guida?')) return;
+    state = {}; try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    boxes.forEach(function (cb) { cb.checked = false; cb.closest('li').classList.remove('checked'); });
+    updateProgress();
+  });
+
+  // Copier
+  var toast = document.getElementById('toast');
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var txt = btn.parentNode.querySelector('pre').textContent;
+      var ok = function () { toast.classList.add('show'); setTimeout(function () { toast.classList.remove('show'); }, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(txt).then(ok);
+      else { var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); ok(); }
+    });
+  });
+
+  // Lightbox
+  var lb = document.getElementById('lightbox'), lbImg = document.getElementById('lightboxImg');
+  document.querySelectorAll('figure img').forEach(function (img) {
+    img.addEventListener('click', function () { lbImg.src = img.src; lbImg.alt = img.alt; lb.classList.add('open'); });
+  });
+  function closeLightbox() { lb.classList.remove('open'); }
+  lb.addEventListener('click', closeLightbox);
+
+  // Menu mobile
+  function closeMenu() { rail.classList.remove('open'); backdrop.classList.remove('open'); }
+  document.getElementById('menuToggle').addEventListener('click', function () { rail.classList.toggle('open'); backdrop.classList.toggle('open'); });
+  backdrop.addEventListener('click', closeMenu);
+
+  // Sélecteur de langue : conserve l'étape courante
+  document.querySelectorAll('.lang-switch a').forEach(function (a) {
+    if (a.dataset.lang === document.documentElement.lang) a.classList.add('active');
+    a.addEventListener('click', function () { a.href = a.getAttribute('href').split('#')[0] + '#etape-' + (current + 1); });
+  });
+
+  // Impression
+  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+
+  // Démarrage : hash #etape-N ou dernière étape non terminée
+  var m = location.hash.match(/etape-(\d+)/);
+  var start = m ? parseInt(m[1], 10) - 1 : 0;
+  updateProgress();
+  go(start, true);
+})();
+</script>
+</body>
+</html>
