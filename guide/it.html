@@ -212,8 +212,7 @@
     <div class="lang-switch"><a class="lang-btn" data-lang="fr" href="index.html">FR</a><a class="lang-btn" data-lang="en" href="en.html">EN</a><a class="lang-btn" data-lang="it" href="it.html">IT</a></div>
     <div class="top-actions">
       <a class="btn green" href="../" title="Apri ElHydro Calculator">🧮 Calcolatore</a>
-      <a class="btn" id="pdfLink" href="#" title="Versione PDF stampabile">📄 PDF</a>
-      <button class="btn" id="printBtn" title="Stampa la guida completa">🖨️</button>
+      <a class="btn" id="pdfLink" href="#" target="_blank" rel="noopener" title="Versione PDF stampabile">📄 PDF</a>
     </div>
   </div>
   <div class="progress"><div id="progressBar"></div></div>
@@ -714,7 +713,7 @@
 <script>
 (function () {
   // ---------- Configuration : à adapter à votre dépôt ----------
-  var PDF_URL = '../METODO_ELHYDRO_-_CROP_E_RISOLUZIONE_IT.pdf'; // chemin du PDF FR dans le dépôt
+  var PDF_URL = '../guida-elhydro-it.pdf';
   var STORAGE_KEY = 'elhydro-guide';
 
   document.getElementById('pdfLink').href = PDF_URL;
@@ -820,7 +819,6 @@
   });
 
   // Impression
-  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
 
   // Démarrage : hash #etape-N ou dernière étape non terminée
   var m = location.hash.match(/etape-(\d+)/);
