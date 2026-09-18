@@ -1234,6 +1234,7 @@
       q.set('dn', dn);
       q.set('ll', ll);
       q.set('ss', customSS);
+      q.set('lang', currentLang);
       const selP = document.getElementById('profileSelect');
       if (selP && selP.value !== '') {
         const prof = loadProfiles()[Number(selP.value)];
@@ -1501,7 +1502,12 @@
     setIf('ll', 'inLL');
     setIf('ss', 'inCustomSS');
     urlProfileName = (q.get('p') || '').trim();
-    recalculate();
+    const lg = (q.get('lang') || '').toUpperCase();
+    if (I18N[lg]) {
+      setLanguage(lg); // recalcule aussi
+    } else {
+      recalculate();
+    }
   }
 
   // Initialisation par défaut
