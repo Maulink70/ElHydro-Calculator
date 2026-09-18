@@ -3,7 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ElHydro FOV & Resolution Calculator</title>
+  <title>ElHydro Calculator</title>
+  <meta name="description" content="VR FOV Crop & Resolution Calculator — Pimax Dream Air & Crystal, PSVR2, Meta Quest 3, Reverb G2, Bigscreen Beyond. ElHydro method (PrimaShock / OpenXR Toolkit).">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0d13">
+  <!-- Open Graph (aperçus Discord & réseaux) -->
+  <meta property="og:title" content="ElHydro Calculator">
+  <meta property="og:description" content="VR FOV Crop & Resolution Calculator — Pimax, PSVR2, Quest 3, Reverb G2, Bigscreen Beyond">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://maulink70.github.io/ElhydroCalculator/">
+  <meta property="og:image" content="https://maulink70.github.io/ElhydroCalculator/icons/og-banner.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <style>
     :root {
       --bg: #0b0d13;
@@ -434,6 +449,7 @@
   <div class="header">
     <h1 id="uiTitle">ElHydro Calculator</h1>
     <div class="top-controls">
+      <button class="lang-btn" id="btnInstallApp" style="display:none;" title="Installer l'application">📲</button>
       <button class="guide-open-btn" id="btnOpenGuide">📖 <span id="txtBtnOpenGuide">Tutoriel</span></button>
       <button class="lang-btn active" data-lang="FR">FR</button>
       <button class="lang-btn" data-lang="EN">EN</button>
@@ -606,6 +622,7 @@
 
     <div class="specs-box" id="modalSpecsDisplay">--</div>
     <div class="guide-body" id="guideContent"></div>
+    <div class="specs-box" id="creditsBlock" style="margin-top:14px; margin-bottom:0;"></div>
   </div>
 </div>
 
@@ -638,6 +655,7 @@
     FR: {
       title: "ElHydro Calculator",
       openGuideBtn: "Tutoriel",
+      installBtnTitle: "Installer l'application",
       modalTitle: "Tutoriel ElHydro",
       lblHeadset: "Casque :",
       lblProfile: "Profil :",
@@ -681,11 +699,13 @@
       bannerText: "Vous pouvez également télécharger le tutoriel détaillé ici",
       downloadBtnText: "📥 Télécharger le PDF (FR)",
       pdfFile: "tutoriel-elhydro-fr.pdf",
+      creditsHtml: "<strong>Crédits</strong><br>Méthode & convertisseur : <strong>ElHydro (@elydro)</strong><br>Système de crop : mod <strong>PrimaShock</strong> pour OpenXR Toolkit<br>Helmet Overlay : <a href='https://github.com/mledour/OpenXR-Layer-crop-fov' target='_blank' rel='noopener' style='color:#60a5fa;'>couche OpenXR de Le Dour</a>",
       specsText: "Données matérielles : <strong>{name}</strong><br>Résolution de rendu native (100 %) : <strong>{w} × {h}</strong> | Angles d'origine : Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
     },
     EN: {
       title: "ElHydro Calculator",
       openGuideBtn: "Guide",
+      installBtnTitle: "Install the app",
       modalTitle: "ElHydro Guide",
       lblHeadset: "Headset:",
       lblProfile: "Profile:",
@@ -729,11 +749,13 @@
       bannerText: "You can also download the detailed tutorial here",
       downloadBtnText: "📥 Download PDF (EN)",
       pdfFile: "guide-elhydro-en.pdf",
+      creditsHtml: "<strong>Credits</strong><br>Method & converter: <strong>ElHydro (@elydro)</strong><br>Crop system: <strong>PrimaShock</strong> mod for OpenXR Toolkit<br>Helmet Overlay: <a href='https://github.com/mledour/OpenXR-Layer-crop-fov' target='_blank' rel='noopener' style='color:#60a5fa;'>Le Dour's OpenXR layer</a>",
       specsText: "Hardware Specs: <strong>{name}</strong><br>Native Render Resolution (100%): <strong>{w} × {h}</strong> | Stock Angles: Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
     },
     IT: {
       title: "ElHydro Calculator",
       openGuideBtn: "Guida",
+      installBtnTitle: "Installa l'app",
       modalTitle: "Guida ElHydro",
       lblHeadset: "Visore :",
       lblProfile: "Profilo :",
@@ -777,6 +799,7 @@
       bannerText: "È anche possibile scaricare il tutorial dettagliato qui",
       downloadBtnText: "📥 Scarica il PDF (IT)",
       pdfFile: "guida-elhydro-it.pdf",
+      creditsHtml: "<strong>Crediti</strong><br>Metodo e convertitore : <strong>ElHydro (@elydro)</strong><br>Sistema di crop : mod <strong>PrimaShock</strong> per OpenXR Toolkit<br>Helmet Overlay : <a href='https://github.com/mledour/OpenXR-Layer-crop-fov' target='_blank' rel='noopener' style='color:#60a5fa;'>layer OpenXR di Le Dour</a>",
       specsText: "Dati hardware : <strong>{name}</strong><br>Risoluzione di rendering nativa (100 %) : <strong>{w} × {h}</strong> | Angoli stock : Up: {up}° / Dn: {dn}° / LL: {ll}° / LR: {lr}°"
     }
   };
@@ -970,6 +993,7 @@
     const dict = I18N[lang];
     document.getElementById('uiTitle').textContent = dict.title;
     document.getElementById('txtBtnOpenGuide').textContent = dict.openGuideBtn;
+    document.getElementById('btnInstallApp').title = dict.installBtnTitle;
     document.getElementById('modalGuideTitle').textContent = dict.modalTitle;
     document.getElementById('lblHeadset').textContent = dict.lblHeadset;
     document.getElementById('lblProfile').textContent = dict.lblProfile;
@@ -1002,6 +1026,7 @@
 
     updateModalSpecs();
     document.getElementById('guideContent').innerHTML = GUIDES[lang];
+    document.getElementById('creditsBlock').innerHTML = dict.creditsHtml;
 
     recalculate();
   }
@@ -1071,9 +1096,15 @@
     document.getElementById('outTotalVFOV').textContent = (up + dn).toFixed(2) + '°';
 
     // Pourcentages Toolkit (colonne E de l'Excel : saisie / natif, format 0% → entier)
-    document.getElementById('pctUp').textContent = Math.round((up / nUp) * 100) + '%';
-    document.getElementById('pctDn').textContent = Math.round((dn / nDn) * 100) + '%';
-    document.getElementById('pctLL').textContent = Math.round((ll / nLL) * 100) + '%';
+    // Rouge si l'angle saisi dépasse l'angle natif du casque (saisie probablement erronée)
+    const setPct = (id, val, native) => {
+      const el = document.getElementById(id);
+      el.textContent = Math.round((val / native) * 100) + '%';
+      el.style.color = val > native ? '#f87171' : '#34d399';
+    };
+    setPct('pctUp', up, nUp);
+    setPct('pctDn', dn, nDn);
+    setPct('pctLL', ll, nLL);
 
     // E4 : largeur croppée = moyenne des ratios œil gauche / œil droit (pleine précision)
     const ratioLeftEye  = (Math.tan(toRad(ll)) + Math.tan(toRad(lr))) / (Math.tan(toRad(nLL)) + Math.tan(toRad(nLR)));
@@ -1411,6 +1442,23 @@
   document.getElementById('btnOpenVisor').addEventListener('click', () => visorModal.style.display = 'block');
   document.getElementById('btnCloseVisor').addEventListener('click', () => visorModal.style.display = 'none');
   window.addEventListener('click', (e) => { if (e.target === visorModal) visorModal.style.display = 'none'; });
+
+  // PWA : bouton « Installer » — visible uniquement si le navigateur autorise l'installation en 1 clic
+  let deferredInstallPrompt = null;
+  const installBtn = document.getElementById('btnInstallApp');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installBtn.style.display = 'inline-flex';
+  });
+  installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    try { await deferredInstallPrompt.userChoice; } catch (err) {}
+    deferredInstallPrompt = null;
+    installBtn.style.display = 'none';
+  });
+  window.addEventListener('appinstalled', () => { installBtn.style.display = 'none'; });
 
   // Téléchargement sécurisé vers les noms exacts
   document.getElementById('btnDownloadPdf').addEventListener('click', () => {
