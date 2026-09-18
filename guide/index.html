@@ -729,6 +729,13 @@
           url = window.opener.location.href;
         }
       } catch (e) {}
+      // La langue du guide en cours de lecture est imposee au calculateur au retour
+      try {
+        var guideLang = (document.documentElement.lang || 'fr').toUpperCase();
+        var u = new URL(url, window.location.href);
+        u.searchParams.set('lang', guideLang);
+        url = u.toString();
+      } catch (e) {}
       window.open(url, 'elhydro-calc');
     });
   });
