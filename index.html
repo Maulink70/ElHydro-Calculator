@@ -1475,10 +1475,13 @@
     window.open(rawFileName, '_blank');
   });
 
-  // Guide pas à pas : ouvre la page de la langue active dans un nouvel onglet
+  // Guide pas à pas : ouvre la page de la langue active dans un onglet nommé (réutilisé aux clics suivants)
   document.getElementById('btnOpenFullGuide').addEventListener('click', () => {
-    window.open(I18N[currentLang].stepGuideUrl, '_blank');
+    window.open(I18N[currentLang].stepGuideUrl, 'elhydro-guide');
   });
+
+  // Nomme l'onglet du calculateur pour que le guide puisse y revenir sans en rouvrir un
+  try { window.name = 'elhydro-calc'; } catch (e) {}
 
   // Partage de configuration : applique les paramètres d'URL au chargement
   let urlProfileName = '';
