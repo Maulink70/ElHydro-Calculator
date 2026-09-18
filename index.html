@@ -471,6 +471,9 @@
       <select class="headset-dropdown" id="profileSelect"></select>
       <button class="profile-btn" id="btnSaveProfile" title="Enregistrer le profil">💾</button>
       <button class="profile-btn" id="btnDeleteProfile" title="Supprimer le profil">🗑️</button>
+      <button class="profile-btn" id="btnExportProfiles" title="Exporter les profils">📤</button>
+      <button class="profile-btn" id="btnImportProfiles" title="Importer des profils">📥</button>
+      <input type="file" id="importFileInput" accept=".json,application/json" style="display:none;">
     </div>
   </div>
 
@@ -643,6 +646,12 @@
       profileDeleteConfirm: "Supprimer le profil « {name} » ?",
       profileSaveTitle: "Enregistrer le profil",
       profileDeleteTitle: "Supprimer le profil",
+      profileExportTitle: "Exporter les profils",
+      profileImportTitle: "Importer des profils",
+      profileExportEmpty: "Aucun profil à exporter.",
+      profileImportError: "Fichier invalide — aucun profil importé.",
+      profileImportConflict: "{n} profil(s) existent déjà. OK = les remplacer par ceux du fichier, Annuler = conserver les versions actuelles.",
+      profileImportDone: "Import terminé : {a} ajouté(s), {r} remplacé(s), {k} conservé(s).",
       uiCol1: "1. Saisie (Toolkit)",
       lblUp: "Haut - Up (°)",
       lblDn: "Bas - Down (°)",
@@ -685,6 +694,12 @@
       profileDeleteConfirm: "Delete profile \"{name}\"?",
       profileSaveTitle: "Save profile",
       profileDeleteTitle: "Delete profile",
+      profileExportTitle: "Export profiles",
+      profileImportTitle: "Import profiles",
+      profileExportEmpty: "No profiles to export.",
+      profileImportError: "Invalid file — no profiles imported.",
+      profileImportConflict: "{n} profile(s) already exist. OK = replace them with the file's versions, Cancel = keep the current versions.",
+      profileImportDone: "Import complete: {a} added, {r} replaced, {k} kept.",
       uiCol1: "1. Input (Toolkit)",
       lblUp: "Top - Up (°)",
       lblDn: "Bottom - Down (°)",
@@ -727,6 +742,12 @@
       profileDeleteConfirm: "Eliminare il profilo « {name} » ?",
       profileSaveTitle: "Salva profilo",
       profileDeleteTitle: "Elimina profilo",
+      profileExportTitle: "Esporta i profili",
+      profileImportTitle: "Importa profili",
+      profileExportEmpty: "Nessun profilo da esportare.",
+      profileImportError: "File non valido — nessun profilo importato.",
+      profileImportConflict: "{n} profilo/i già esistente/i. OK = sostituirli con quelli del file, Annulla = conservare le versioni attuali.",
+      profileImportDone: "Importazione completata : {a} aggiunti, {r} sostituiti, {k} conservati.",
       uiCol1: "1. Inserimento (Toolkit)",
       lblUp: "Superiore - Up (°)",
       lblDn: "Inferiore - Down (°)",
@@ -954,6 +975,8 @@
     document.getElementById('lblProfile').textContent = dict.lblProfile;
     document.getElementById('btnSaveProfile').title = dict.profileSaveTitle;
     document.getElementById('btnDeleteProfile').title = dict.profileDeleteTitle;
+    document.getElementById('btnExportProfiles').title = dict.profileExportTitle;
+    document.getElementById('btnImportProfiles').title = dict.profileImportTitle;
     refreshProfileList(document.getElementById('profileSelect').value);
     document.getElementById('uiCol1').textContent = dict.uiCol1;
     document.getElementById('lblUp').textContent = dict.lblUp;
@@ -1162,6 +1185,22 @@
       `;
       visorBody.appendChild(tr);
     });
+
+    // Partage de configuration : l'URL reflète en permanence la config courante
+    try {
+      const q = new URLSearchParams();
+      q.set('hs', currentHeadsetKey);
+      q.set('up', up);
+      q.set('dn', dn);
+      q.set('ll', ll);
+      q.set('ss', customSS);
+      const selP = document.getElementById('profileSelect');
+      if (selP && selP.value !== '') {
+        const prof = loadProfiles()[Number(selP.value)];
+        if (prof) q.set('p', prof.name);
+      }
+      history.replaceState(null, '', window.location.pathname + '?' + q.toString());
+    } catch (e) {}
   }
 
   // Événements
@@ -1248,7 +1287,7 @@
     const sel = document.getElementById('profileSelect');
     const profiles = loadProfiles();
     const current = sel.value !== '' ? profiles[Number(sel.value)] : null;
-    const name = (window.prompt(dict.profileNamePrompt, current ? current.name : '') || '').trim();
+    const name = (window.prompt(dict.profileNamePrompt, current ? current.name : urlProfileName) || '').trim();
     if (!name) return;
     const p = {
       name,
@@ -1276,6 +1315,78 @@
     profiles.splice(Number(sel.value), 1);
     saveProfiles(profiles);
     refreshProfileList('');
+  });
+
+  // Export : télécharge tous les profils en JSON
+  document.getElementById('btnExportProfiles').addEventListener('click', () => {
+    const dict = I18N[currentLang];
+    const profiles = loadProfiles();
+    if (!profiles.length) { window.alert(dict.profileExportEmpty); return; }
+    const blob = new Blob([JSON.stringify(profiles, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'elhydro-profils.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // Import : validation stricte du fichier, fusion sans perte, question unique en cas de conflit
+  function sanitizeImportedProfiles(arr) {
+    if (!Array.isArray(arr)) return null;
+    const out = [];
+    for (const p of arr) {
+      if (!p || typeof p !== 'object') return null;
+      const name = String(p.name || '').trim();
+      if (!name || !HEADSETS[p.hs]) return null;
+      const up = parseFloat(p.up), dn = parseFloat(p.dn), ll = parseFloat(p.ll), ss = parseFloat(p.ss);
+      if ([up, dn, ll, ss].some(x => isNaN(x))) return null;
+      out.push({ name, hs: p.hs, up, dn, ll, ss });
+    }
+    return out;
+  }
+
+  document.getElementById('btnImportProfiles').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+  });
+
+  document.getElementById('importFileInput').addEventListener('change', (e) => {
+    const dict = I18N[currentLang];
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const incoming = sanitizeImportedProfiles(JSON.parse(reader.result));
+        if (!incoming) { window.alert(dict.profileImportError); e.target.value = ''; return; }
+        const existing = loadProfiles();
+        const conflicts = incoming.filter(p => existing.some(x => x.hs === p.hs && x.name === p.name));
+        let replace = false;
+        if (conflicts.length) {
+          replace = window.confirm(dict.profileImportConflict.replace('{n}', conflicts.length));
+        }
+        let added = 0, replaced = 0, kept = 0;
+        incoming.forEach(p => {
+          const i = existing.findIndex(x => x.hs === p.hs && x.name === p.name);
+          if (i === -1) { existing.push(p); added++; }
+          else if (replace) { existing[i] = p; replaced++; }
+          else { kept++; }
+        });
+        saveProfiles(existing);
+        refreshProfileList('');
+        window.alert(dict.profileImportDone
+          .replace('{a}', added)
+          .replace('{r}', replaced)
+          .replace('{k}', kept));
+      } catch (err) {
+        window.alert(dict.profileImportError);
+      }
+      e.target.value = '';
+    };
+    reader.onerror = () => { window.alert(dict.profileImportError); e.target.value = ''; };
+    reader.readAsText(file);
   });
 
   // Infobulles cliquables (?)
@@ -1307,9 +1418,31 @@
     window.open(rawFileName, '_blank');
   });
 
+  // Partage de configuration : applique les paramètres d'URL au chargement
+  let urlProfileName = '';
+  function applyUrlParams() {
+    const q = new URLSearchParams(window.location.search);
+    const hs = q.get('hs');
+    if (hs && HEADSETS[hs]) {
+      document.getElementById('headsetSelect').value = hs;
+      onHeadsetChange(hs);
+    }
+    const setIf = (param, id) => {
+      const v = parseFloat(q.get(param));
+      if (!isNaN(v)) document.getElementById(id).value = v;
+    };
+    setIf('up', 'inUp');
+    setIf('dn', 'inDn');
+    setIf('ll', 'inLL');
+    setIf('ss', 'inCustomSS');
+    urlProfileName = (q.get('p') || '').trim();
+    recalculate();
+  }
+
   // Initialisation par défaut
   onHeadsetChange('dream-air');
   setLanguage('FR');
+  applyUrlParams();
 </script>
 
 </body>
