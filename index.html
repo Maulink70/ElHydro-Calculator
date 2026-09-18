@@ -1331,6 +1331,7 @@
   // Sélection d'un profil : bascule de casque si besoin + restauration des valeurs
   document.getElementById('profileSelect').addEventListener('change', (e) => {
     const idx = e.target.value;
+    updateProfileButtons();
     if (idx === '') return;
     const p = loadProfiles()[Number(idx)];
     if (!p || !HEADSETS[p.hs]) return;
