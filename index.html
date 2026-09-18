@@ -113,7 +113,7 @@
       border: 1px solid var(--border);
       color: #93c5fd;
       border-radius: 4px;
-      padding: 4px 8px;
+      padding: 4px 6px;
       font-size: 0.85rem;
       cursor: pointer;
       line-height: 1;
@@ -486,7 +486,8 @@
       <label for="profileSelect" id="lblProfile">Profil :</label>
       <select class="headset-dropdown" id="profileSelect"></select>
       <button class="profile-btn" id="btnSaveProfile" title="Enregistrer le profil">💾</button>
-      <button class="profile-btn" id="btnDeleteProfile" title="Supprimer le profil">🗑️</button>
+      <button class="profile-btn" id="btnDeleteProfile" title="Supprimer le profil" style="display:none;">🗑️</button>
+      <button class="profile-btn" id="btnShareProfile" title="Partager le profil" style="display:none;">📨</button>
       <button class="profile-btn" id="btnExportProfiles" title="Exporter les profils">📤</button>
       <button class="profile-btn" id="btnImportProfiles" title="Importer des profils">📥</button>
       <input type="file" id="importFileInput" accept=".json,application/json" style="display:none;">
@@ -672,6 +673,10 @@
       profileImportError: "Fichier invalide — aucun profil importé.",
       profileImportConflict: "{n} profil(s) existent déjà. OK = les remplacer par ceux du fichier, Annuler = conserver les versions actuelles.",
       profileImportDone: "Import terminé : {a} ajouté(s), {r} remplacé(s), {k} conservé(s).",
+      profileShareTitle: "Partager le profil",
+      shareText: "Mon profil ElHydro « {name} »",
+      shareCopied: "Lien copié dans le presse-papiers !",
+      shareCopyPrompt: "Copiez ce lien :",
       uiCol1: "1. Saisie (Toolkit)",
       lblUp: "Haut - Up (°)",
       lblDn: "Bas - Down (°)",
@@ -724,6 +729,10 @@
       profileImportError: "Invalid file — no profiles imported.",
       profileImportConflict: "{n} profile(s) already exist. OK = replace them with the file's versions, Cancel = keep the current versions.",
       profileImportDone: "Import complete: {a} added, {r} replaced, {k} kept.",
+      profileShareTitle: "Share profile",
+      shareText: "My ElHydro profile \"{name}\"",
+      shareCopied: "Link copied to clipboard!",
+      shareCopyPrompt: "Copy this link:",
       uiCol1: "1. Input (Toolkit)",
       lblUp: "Top - Up (°)",
       lblDn: "Bottom - Down (°)",
@@ -776,6 +785,10 @@
       profileImportError: "File non valido — nessun profilo importato.",
       profileImportConflict: "{n} profilo/i già esistente/i. OK = sostituirli con quelli del file, Annulla = conservare le versioni attuali.",
       profileImportDone: "Importazione completata : {a} aggiunti, {r} sostituiti, {k} conservati.",
+      profileShareTitle: "Condividi profilo",
+      shareText: "Il mio profilo ElHydro « {name} »",
+      shareCopied: "Link copiato negli appunti!",
+      shareCopyPrompt: "Copia questo link :",
       uiCol1: "1. Inserimento (Toolkit)",
       lblUp: "Superiore - Up (°)",
       lblDn: "Inferiore - Down (°)",
@@ -1007,6 +1020,7 @@
     document.getElementById('lblProfile').textContent = dict.lblProfile;
     document.getElementById('btnSaveProfile').title = dict.profileSaveTitle;
     document.getElementById('btnDeleteProfile').title = dict.profileDeleteTitle;
+    document.getElementById('btnShareProfile').title = dict.profileShareTitle;
     document.getElementById('btnExportProfiles').title = dict.profileExportTitle;
     document.getElementById('btnImportProfiles').title = dict.profileImportTitle;
     refreshProfileList(document.getElementById('profileSelect').value);
@@ -1304,6 +1318,14 @@
     });
     sel.value = selected || '';
     if (sel.selectedIndex === -1) sel.value = '';
+    updateProfileButtons();
+  }
+
+  // 🗑️ et 📨 ne s'affichent que lorsqu'un profil est sélectionné
+  function updateProfileButtons() {
+    const hasSel = document.getElementById('profileSelect').value !== '';
+    document.getElementById('btnDeleteProfile').style.display = hasSel ? '' : 'none';
+    document.getElementById('btnShareProfile').style.display = hasSel ? '' : 'none';
   }
 
   // Sélection d'un profil : bascule de casque si besoin + restauration des valeurs
@@ -1319,6 +1341,7 @@
     document.getElementById('inLL').value = p.ll;
     document.getElementById('inCustomSS').value = p.ss;
     e.target.value = idx;
+    updateProfileButtons();
     recalculate();
   });
 
@@ -1356,6 +1379,38 @@
     profiles.splice(Number(sel.value), 1);
     saveProfiles(profiles);
     refreshProfileList('');
+  });
+
+  // Partager le profil sélectionné : feuille de partage native (WhatsApp, mail…),
+  // repli automatique sur la copie du lien dans le presse-papiers
+  document.getElementById('btnShareProfile').addEventListener('click', async () => {
+    const dict = I18N[currentLang];
+    const sel = document.getElementById('profileSelect');
+    if (sel.value === '') return;
+    const p = loadProfiles()[Number(sel.value)];
+    if (!p) return;
+    const q = new URLSearchParams();
+    q.set('hs', p.hs);
+    q.set('up', p.up);
+    q.set('dn', p.dn);
+    q.set('ll', p.ll);
+    q.set('ss', p.ss);
+    q.set('lang', currentLang);
+    q.set('p', p.name);
+    const shareUrl = window.location.origin + window.location.pathname + '?' + q.toString();
+    const msg = dict.shareText.replace('{name}', p.name);
+    if (navigator.share) {
+      try { await navigator.share({ text: msg, url: shareUrl }); } catch (e) {}
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(msg + ' ' + shareUrl);
+        window.alert(dict.shareCopied);
+      } catch (e) {
+        window.prompt(dict.shareCopyPrompt, shareUrl);
+      }
+    } else {
+      window.prompt(dict.shareCopyPrompt, shareUrl);
+    }
   });
 
   // Export : télécharge tous les profils en JSON
