@@ -717,15 +717,19 @@
   var STORAGE_KEY = 'elhydro-guide';
 
   document.getElementById('pdfLink').href = PDF_URL;
-  // Bouton Calculateur intelligent : rebascule sur l'onglet d'origine s'il est ouvert,
-  // sinon (ré)utilise un onglet nommé unique au lieu d'en empiler de nouveaux.
+  // Bouton Calculateur intelligent : ramene l'onglet nomme du calculateur au premier plan
+  // en le re-naviguant vers sa propre URL (etat conserve par les parametres d'URL) ;
+  // s'il n'existe plus, ouvre un onglet nomme unique (jamais d'empilement).
   document.querySelectorAll('a.btn.green[href="../"]').forEach(function (a) {
     a.addEventListener('click', function (ev) {
       ev.preventDefault();
-      if (window.opener && !window.opener.closed) {
-        try { window.opener.focus(); return; } catch (e) {}
-      }
-      window.open('../', 'elhydro-calc');
+      var url = '../';
+      try {
+        if (window.opener && !window.opener.closed && window.opener.location.href) {
+          url = window.opener.location.href;
+        }
+      } catch (e) {}
+      window.open(url, 'elhydro-calc');
     });
   });
 
