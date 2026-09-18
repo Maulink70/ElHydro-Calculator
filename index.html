@@ -1484,10 +1484,13 @@
   // Nomme l'onglet du calculateur pour que le guide puisse y revenir sans en rouvrir un
   try { window.name = 'elhydro-calc'; } catch (e) {}
 
-  // Partage de configuration : applique les paramètres d'URL au chargement
+  // Partage de configuration : applique les paramètres d'URL au chargement.
+  // IMPORTANT : la query est capturée AVANT tout recalcul, car la synchro d'URL
+  // (dans recalculate) réécrit l'adresse et effacerait les paramètres reçus.
+  const INITIAL_SEARCH = window.location.search;
   let urlProfileName = '';
   function applyUrlParams() {
-    const q = new URLSearchParams(window.location.search);
+    const q = new URLSearchParams(INITIAL_SEARCH);
     const hs = q.get('hs');
     if (hs && HEADSETS[hs]) {
       document.getElementById('headsetSelect').value = hs;
